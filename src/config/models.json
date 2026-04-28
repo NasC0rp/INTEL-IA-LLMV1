@@ -1,0 +1,26 @@
+{
+    "models": {
+        "intel-code": {
+            "name": "INTEL CODE",
+            "source": "huihui_ai/qwen3-abliterated:4b",
+            "parameters": "4B",
+            "min_ram_gb": 6,
+            "token_per_second": "3-8",
+            "censored": false,
+            "language": ["fr", "en"],
+            "recommended_for": "Usage quotidien"
+        },
+        "eurollm": {
+            "name": "INTEL CODE Underclocking",
+            "source": "huihui_ai/eurollm-abliterated:1.7b",
+            "parameters": "1.7B",
+            "min_ram_gb": 2,
+            "token_per_second": "15-25",
+            "censored": false,
+            "language": ["fr", "en"],
+            "recommended_for": "Vieilles machines"
+
+        }
+    },
+    "default_model": "intel-code"
+}
