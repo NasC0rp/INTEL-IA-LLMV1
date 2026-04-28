@@ -19,8 +19,8 @@ Développé par **NasCorp** © 2026 — Projet indépendant (pas encore une entr
 ## Installation
 
 ```bash
-git clone https://github.com/NasC0rp/INTEL-GPT-LLMV1.git
-cd INTEL-GPT-LLMV1
+git clone https://github.com/NasC0rp/intel-code-LLMV1.git
+cd intel-code-LLMV1
 chmod +x scripts/*.sh
 ./scripts/setup.sh
 ./scripts/start.sh
@@ -81,7 +81,7 @@ Pour activer une clé : `key` → entrer la clé
 ## Architecture
 
 ```
-INTEL-GPT-LLMV1/
+intel-code-LLMV1/
 ├── main.py                 # Point d'entrée
 ├── requirements.txt        # Dépendances
 ├── Modelfile               # Configuration du modèle
@@ -172,7 +172,7 @@ R : Oui, le modèle est "abliterated" — les couches de refus ont été supprim
 
 ## Liens
 
-- GitHub : [NasC0rp/INTEL-GPT-LLMV1](https://github.com/NasC0rp/INTEL-GPT-LLMV1)
+- GitHub : [NasC0rp/intel-code-LLMV1](https://github.com/NasC0rp/intel-code-LLMV1)
 - Telegram : @IntelIA_NasCorp
 
 ## Avertissement

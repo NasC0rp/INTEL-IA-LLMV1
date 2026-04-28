@@ -9,5 +9,5 @@ fi
 ollama serve > /dev/null 2>&1 &
 sleep 3
 ollama pull huihui_ai/qwen3-abliterated:4b
-ollama create intel-gpt -f Modelfile
+ollama create intel-code -f Modelfile
 echo "=== Installation terminée ==="

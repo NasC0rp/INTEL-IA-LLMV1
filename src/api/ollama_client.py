@@ -7,7 +7,7 @@ from src.api.error_handler import ErrorHandler
 class OllamaClient:
     def __init__(self, config: Any) -> None:
         self.host: str = config.get("ollama.host", "http://localhost:11434/api/generate")
-        self.model: str = config.get("ollama.model", "intel-gpt")
+        self.model: str = config.get("ollama.model", "intel-code")
         self.timeout: int = config.get("ollama.timeout", 120)
         self.builder: RequestBuilder = RequestBuilder(config)
         self.error_handler: ErrorHandler = ErrorHandler()

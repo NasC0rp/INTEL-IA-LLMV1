@@ -2,7 +2,7 @@ import requests
 
 class NetworkChecker:
     def __init__(self, config):
-        self.model = config.get("ollama.model", "intel-gpt")
+        self.model = config.get("ollama.model", "intel-code")
 
     def check(self):
         try:

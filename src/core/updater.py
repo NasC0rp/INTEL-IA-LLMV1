@@ -74,7 +74,7 @@ from src.api.error_handler import ErrorHandler
 class OllamaClient:
     def __init__(self, config):
         self.host = config.get("ollama.host", "http://localhost:11434/api/generate")
-        self.model = config.get("ollama.model", "intel-gpt")
+        self.model = config.get("ollama.model", "intel-code")
         self.timeout = config.get("ollama.timeout", 120)
         self.builder = RequestBuilder(config)
         self.error_handler = ErrorHandler()
