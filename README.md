@@ -81,53 +81,65 @@ Pour activer une clé : `key` → entrer la clé
 ## Architecture
 
 ```
-intel-code-LLMV1/
-├── main.py                 # Point d'entrée
-├── requirements.txt        # Dépendances
-├── Modelfile               # Configuration du modèle
-├── .version                # Version actuelle
+INTEL-IA-LLMV1/
 │
-├── src/
-│   ├── core/               # Moteur principal
-│   │   ├── engine.py       # Boucle de conversation
-│   │   ├── config_loader.py
-│   │   └── updater.py      # Mise à jour auto
+├── 🎯 main.py              → Point d'entrée
+├── 📦 requirements.txt     → requests, psutil
+├── 🦙 Modelfile            → FROM huihui_ai/qwen3-abliterated:4b
+├── 🔢 .version             → 1.0.0
+├── 🙈 .gitignore
+├── 📖 README.md
+│
+├── 📁 src/
+│   ├── 🐍 __init__.py
+│   ├── 📁 core/            → Moteur principal
+│   │   ├── 🎮 engine.py        → Boucle de conversation
+│   │   ├── ⚙️ config_loader.py → Charge config/limits/prompts/models
+│   │   └── 🔄 updater.py       → Vérifie màj GitHub
 │   │
-│   ├── api/                # Client Ollama
-│   │   ├── ollama_client.py
-│   │   ├── request_builder.py
-│   │   └── error_handler.py
+│   ├── 📁 api/             → Client Ollama
+│   │   ├── 🦙 ollama_client.py  → POST /api/generate, warmup, unload
+│   │   ├── 📦 request_builder.py → Construit payloads JSON
+│   │   └── ❌ error_handler.py   → 500/404/timeout/connection
 │   │
-│   ├── managers/           # Gestionnaires
-│   │   ├── quota_manager.py
-│   │   ├── cache_manager.py
-│   │   ├── history_manager.py
-│   │   ├── session_manager.py
-│   │   ├── memory_manager.py
-│   │   ├── key_manager.py
-│   │   └── logger.py
+│   ├── 📁 managers/        → Gestionnaires
+│   │   ├── 📊 quota_manager.py  → FREE(30msg/12h) VIP(50msg/12h) UNLIMITED(999msg/1h)
+│   │   ├── 💾 cache_manager.py  → Cache LRU 100 entrées
+│   │   ├── 📜 history_manager.py → Historique par session UUID
+│   │   ├── 🆔 session_manager.py → UUID sessions
+│   │   ├── 🧠 memory_manager.py  → Garbage collector
+│   │   ├── 🔑 key_manager.py     → INT3LK3Y_V1P-XXXX / INT3LK3Y_ULT1M3-XXXX
+│   │   └── 📝 logger.py          → data/logs/intel_code.log
 │   │
-│   ├── checker/            # Vérification système
-│   └── utils/              # Utilitaires
+│   ├── 📁 checker/         → Vérification système (parallèle 4 threads)
+│   │   ├── 🔍 system_checker.py  → Orchestrateur
+│   │   ├── 🖥️ cpu_checker.py     → ≥2 cœurs
+│   │   ├── 🧮 ram_checker.py     → ≥4 Go
+│   │   ├── 💿 disk_checker.py    → ≥10 Go
+│   │   └── 🌐 network_checker.py → Ollama actif
+│   │
+│   └── 📁 utils/           → Utilitaires
+│       ├── 🎨 colors.py        → ANSI colors (RED/GREEN/YELLOW...)
+│       ├── 📏 formatter.py     → textwrap 80 colonnes
+│       └── 🔧 helpers.py       → timestamp, format_seconds
 │
-├── config/                 # Fichiers JSON
-│   ├── config.json
-│   ├── limits.json
-│   ├── prompts.json
-│   ├── models.json
-│   └── keys.json
+├── 📁 config/              → JSON (à la racine)
+│   ├── ⚙️ config.json      → host, model: intel-code, timeout: 120
+│   ├── 📊 limits.json      → Tiers + current_tier
+│   ├── 💬 prompts.json     → 6 modes
+│   ├── 🤖 models.json      → intel-code: 4B, 6Go RAM, 3-8 t/s
+│   └── 🔑 keys.json        → VIP: [], unlimited: []
 │
-├── data/                   # Données locales
-│   ├── cache/
-│   ├── history/
-│   └── logs/
+├── 📁 data/                → Données (créé auto)
+│   ├── 📁 cache/           → .responses, .quota, .version_cache
+│   ├── 📁 history/         → {session_id}.json
+│   └── 📁 logs/            → intel_code.log
 │
-└── scripts/                # Scripts bash
-    ├── setup.sh
-    ├── start.sh
-    ├── dev.sh
-    └── update.sh
-```
+└── 📁 scripts/             → Bash
+    ├── 🔧 setup.sh         → apt, ollama, pull model, create intel-code
+    ├── 🚀 start.sh         → ollama serve + python3 main.py
+    ├── 🛠️ dev.sh           → Vérification uniquement
+    └── ⬆️ update.sh        → git pull
 
 ## Configuration
 
