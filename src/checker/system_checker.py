@@ -6,20 +6,21 @@ from src.checker.ram_checker import RamChecker
 from src.checker.disk_checker import DiskChecker
 from src.checker.network_checker import NetworkChecker
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any
 
 class SystemChecker:
-    def __init__(self, config):
-        self.checks = [
+    def __init__(self, config: Any) -> None:
+        self.checks: list = [
             CpuChecker(),
             RamChecker(),
             DiskChecker(),
             NetworkChecker(config),
         ]
 
-    def check_all(self):
-        results = []
+    def check_all(self) -> tuple:
+        results: list = []
         with ThreadPoolExecutor(max_workers=4) as executor:
-            futures = {executor.submit(c.check): c for c in self.checks}
+            futures: dict = {executor.submit(c.check): c for c in self.checks}
             for future in as_completed(futures):
                 try:
                     results.append(future.result())
