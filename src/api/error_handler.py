@@ -1,19 +1,21 @@
-class ErrorHandler:
-    def __init__(self):
-        self.error_count = 0
+import requests
 
-    def handle(self, exception, prompt):
+class ErrorHandler:
+    def __init__(self) -> None:
+        self.error_count: int = 0
+
+    def handle(self, exception: requests.exceptions.RequestException, prompt: str) -> str:
         self.error_count += 1
-        msg = str(exception)
+        msg: str = str(exception)
         if "500" in msg:
             return "Erreur serveur Ollama. Réessayez."
-        elif "404" in msg:
+        if "404" in msg:
             return "Modèle introuvable. Lancez: ollama pull"
-        elif "timeout" in msg.lower():
+        if "timeout" in msg.lower():
             return "Délai dépassé. Réessayez."
-        elif "connection" in msg.lower():
+        if "connection" in msg.lower():
             return "Ollama non lancé. Faites: ollama serve"
         return f"Erreur: {msg[:100]}"
 
-    def reset(self):
+    def reset(self) -> None:
         self.error_count = 0

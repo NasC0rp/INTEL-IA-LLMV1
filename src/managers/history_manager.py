@@ -1,21 +1,22 @@
 import json
 import os
 from datetime import datetime
+from typing import Any, List, Dict
 
 class HistoryManager:
-    def __init__(self, config):
-        self.max_history = config.get("system.max_history", 20)
-        self.history_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'history')
+    def __init__(self, config: Any) -> None:
+        self.max_history: int = config.get("system.max_history", 20)
+        self.history_dir: str = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'history')
 
-    def add(self, session_id, prompt, response):
-        filepath = os.path.join(self.history_dir, f"{session_id}.json")
+    def add(self, session_id: str, prompt: str, response: str) -> None:
+        filepath: str = os.path.join(self.history_dir, f"{session_id}.json")
         os.makedirs(self.history_dir, exist_ok=True)
-        history = []
+        history: List[Dict[str, str]] = []
         if os.path.exists(filepath):
             try:
-                with open(filepath, 'r') as f:
+                with open(filepath, 'r', encoding='utf-8') as f:
                     history = json.load(f)
-            except:
+            except (json.JSONDecodeError, IOError):
                 pass
         history.append({
             "timestamp": datetime.now().isoformat(),
@@ -24,20 +25,20 @@ class HistoryManager:
         })
         if len(history) > self.max_history:
             history = history[-self.max_history:]
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(history, f, indent=2, ensure_ascii=False)
 
-    def get(self, session_id):
-        filepath = os.path.join(self.history_dir, f"{session_id}.json")
+    def get(self, session_id: str) -> List[Dict[str, str]]:
+        filepath: str = os.path.join(self.history_dir, f"{session_id}.json")
         if os.path.exists(filepath):
             try:
-                with open(filepath, 'r') as f:
+                with open(filepath, 'r', encoding='utf-8') as f:
                     return json.load(f)
-            except:
+            except (json.JSONDecodeError, IOError):
                 pass
         return []
 
-    def clear(self, session_id):
-        filepath = os.path.join(self.history_dir, f"{session_id}.json")
+    def clear(self, session_id: str) -> None:
+        filepath: str = os.path.join(self.history_dir, f"{session_id}.json")
         if os.path.exists(filepath):
             os.remove(filepath)

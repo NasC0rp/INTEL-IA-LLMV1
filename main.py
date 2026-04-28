@@ -1,26 +1,28 @@
 import sys
 import os
+from typing import NoReturn
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 from core.engine import IntelGPTEngine
 from core.config_loader import ConfigLoader
 from managers.logger import Logger
 
-def main():
-    logger = Logger("IntelCODE", logs_dir="data/logs")
+def main() -> None:
+    logger: Logger = Logger("IntelCODE", logs_dir="data/logs")
     logger.info("INTEL CODE - Démarrage")
-    
+
     try:
-        config = ConfigLoader("config/config.json")
+        config: ConfigLoader = ConfigLoader("config/config.json")
         config.validate()
         logger.info("Configuration chargée")
-    except Exception as e:
+    except (FileNotFoundError, ValueError) as e:
         logger.error(f"Erreur configuration: {e}")
         print(f"\nErreur: {e}")
         sys.exit(1)
-    
+
     try:
-        engine = IntelGPTEngine(config, logger)
+        engine: IntelGPTEngine = IntelGPTEngine(config, logger)
         engine.run()
     except KeyboardInterrupt:
         logger.info("Arrêt utilisateur")
