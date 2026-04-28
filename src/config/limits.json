@@ -6,8 +6,6 @@
             "num_ctx": 2048,
             "num_predict": 512,
             "num_thread": 3,
-            "cache_enabled": true,
-            "history_enabled": true,
             "requires_key": false
         },
         "vip": {
@@ -16,19 +14,15 @@
             "num_ctx": 4096,
             "num_predict": 1024,
             "num_thread": 3,
-            "cache_enabled": true,
-            "history_enabled": true,
             "requires_key": true,
             "key_prefix": "INT3LK3Y_V1P"
         },
         "unlimited": {
-            "max_messages": 100,
-            "window_hours": 2,
+            "max_messages": 999,
+            "window_hours": 1,
             "num_ctx": 8192,
             "num_predict": 2048,
             "num_thread": 3,
-            "cache_enabled": true,
-            "history_enabled": true,
             "requires_key": true,
             "key_prefix": "INT3LK3Y_ULT1M3"
         }
