@@ -1,6 +1,6 @@
 import requests
 import threading
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 from src.api.request_builder import RequestBuilder
 from src.api.error_handler import ErrorHandler
 
@@ -13,6 +13,8 @@ class OllamaClient:
         self.error_handler: ErrorHandler = ErrorHandler()
         self._warmed: bool = False
         self._lock: threading.Lock = threading.Lock()
+        self._last_tokens: int = 0
+        self._last_eval_count: int = 0
 
     def generate(self, prompt: str, mode: str = "default") -> str:
         if not self._warmed:
@@ -23,6 +25,8 @@ class OllamaClient:
             response.raise_for_status()
             data: Dict[str, Any] = response.json()
             self.error_handler.reset()
+            self._last_eval_count = data.get("eval_count", 0)
+            self._last_tokens = payload["options"]["num_predict"] - self._last_eval_count
             return data.get("response", "").strip()
         except requests.exceptions.RequestException as e:
             return self.error_handler.handle(e, prompt)
@@ -68,3 +72,9 @@ class OllamaClient:
         except requests.exceptions.RequestException:
             pass
         return []
+
+    def get_last_tokens(self) -> int:
+        return max(0, self._last_tokens)
+
+    def get_last_eval_count(self) -> int:
+        return self._last_eval_count

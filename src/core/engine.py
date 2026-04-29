@@ -35,6 +35,7 @@ COMMANDS = {
     "models": "Modeles disponibles",
     "key": "Activer une cle VIP/Unlimited",
     "tier": "Voir le tier actuel",
+    "tokens": "Tokens restants",
     "help": "Aide"
 }
 
@@ -204,6 +205,16 @@ class IntelGPTEngine:
             self._activate_key()
         elif cmd == "tier":
             print_colored(f"Tier actuel : {self.current_tier.upper()}", Colors.YELLOW)
+        elif cmd == "tokens":
+            tier_config: dict = self.config.get_tier_config()
+            max_tokens: int = tier_config.get("num_predict", 512)
+            used: int = self.ollama.get_last_eval_count()
+            remaining: int = max(0, max_tokens - used)
+            bar_length: int = 20
+            filled: int = int((used / max_tokens) * bar_length) if max_tokens > 0 else 0
+            filled = min(filled, bar_length)
+            bar: str = "|" + "█" * filled + "░" * (bar_length - filled) + "|"
+            print_colored(f"Tokens : {bar} {used}/{max_tokens} utilises ({remaining} restants)", Colors.CYAN)
         elif cmd == "help":
             print_colored("\nCommandes :", Colors.CYAN)
             for c, d in COMMANDS.items():
