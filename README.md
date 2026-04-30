@@ -7,7 +7,7 @@
 
 ---
 
-Intel CODE est un assistant IA en ligne de commande. Modèle Qwen3 4B abliterated via Ollama. 100% local, gratuit, sans censure.
+Intel CODE est un assistant IA en ligne de commande. 100% local, gratuit, sans censure.
 
 Développé par **NasCorp** © 2026 — Projet indépendant.
 
