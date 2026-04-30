@@ -1,4 +1,4 @@
-```markdown
+
 # Intel CODE CX1
 
 **Assistant IA Terminal — Non censuré — 100% Local**
