@@ -15,11 +15,10 @@ Développé par **NasCorp** © 2026 — Projet indépendant.
 
 ## Versions
 
-| Version | Modèle | Statut |
-|---------|--------|--------|
-| **CX1** | Qwen3 4B Abliterated | ✅ Actuelle |
-| CX2 | Qwen3 8B + API | 🔄 À venir |
-| CX3 | Fine-tuned custom | 📅 Prévu |
+| Version | Statut |
+|---------|--------|
+| **CX1** | ✅ Actuelle |
+
 
 ---
 
