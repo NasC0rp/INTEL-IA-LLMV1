@@ -13,7 +13,6 @@ class OllamaClient:
         self.error_handler: ErrorHandler = ErrorHandler()
         self._warmed: bool = False
         self._lock: threading.Lock = threading.Lock()
-        self._last_tokens: int = 0
         self._last_eval_count: int = 0
 
     def generate(self, prompt: str, mode: str = "default") -> str:
@@ -22,11 +21,11 @@ class OllamaClient:
         payload: Dict[str, Any] = self.builder.build(prompt, self.model, mode)
         try:
             response: requests.Response = requests.post(self.host, json=payload, timeout=self.timeout)
-            response.raise_for_status()
+            if response.status_code != 200:
+                return f"Erreur {response.status_code}: {response.text[:200]}"
             data: Dict[str, Any] = response.json()
             self.error_handler.reset()
             self._last_eval_count = data.get("eval_count", 0)
-            self._last_tokens = payload["options"]["num_predict"] - self._last_eval_count
             return data.get("response", "").strip()
         except requests.exceptions.RequestException as e:
             return self.error_handler.handle(e, prompt)
@@ -35,46 +34,38 @@ class OllamaClient:
         with self._lock:
             if self._warmed:
                 return
-            payload: Dict[str, Any] = self.builder.build("ping", self.model, "concise")
-            payload["options"]["num_predict"] = 1
-            payload["options"]["num_ctx"] = 128
             try:
-                requests.post(self.host, json=payload, timeout=10)
-            except requests.exceptions.RequestException:
+                r = requests.post(self.host, json={"model": self.model, "prompt": "ping", "stream": False, "options": {"num_predict": 1, "num_ctx": 128}}, timeout=10)
+                if r.status_code == 200:
+                    self._warmed = True
+            except:
                 pass
             self._warmed = True
 
     def unload(self) -> None:
         try:
-            requests.post(
-                "http://localhost:11434/api/generate",
-                json={"model": self.model, "prompt": "", "keep_alive": 0},
-                timeout=5
-            )
-        except requests.exceptions.RequestException:
+            requests.post("http://localhost:11434/api/generate", json={"model": self.model, "prompt": "", "keep_alive": 0}, timeout=5)
+        except:
             pass
 
     def is_alive(self) -> bool:
         try:
-            r: requests.Response = requests.get("http://localhost:11434/api/tags", timeout=3)
+            r = requests.get("http://localhost:11434/api/tags", timeout=3)
             if r.ok:
-                models: list = [m["name"] for m in r.json().get("models", [])]
+                models = [m["name"] for m in r.json().get("models", [])]
                 return self.model in models or f"{self.model}:latest" in models
-        except requests.exceptions.RequestException:
+        except:
             pass
         return False
 
     def get_available_models(self) -> list:
         try:
-            r: requests.Response = requests.get("http://localhost:11434/api/tags", timeout=3)
+            r = requests.get("http://localhost:11434/api/tags", timeout=3)
             if r.ok:
                 return [m["name"] for m in r.json().get("models", [])]
-        except requests.exceptions.RequestException:
+        except:
             pass
         return []
-
-    def get_last_tokens(self) -> int:
-        return max(0, self._last_tokens)
 
     def get_last_eval_count(self) -> int:
         return self._last_eval_count

@@ -2,29 +2,35 @@
 
 **Assistant IA Terminal — Non censuré — 100% Local**
 
-![Version](https://img.shields.io/badge/version-1.0.0-red)
+![Version](https://img.shields.io/badge/version-CX1-red)
 ![License](https://img.shields.io/badge/license-MIT-darkred)
 ![Python](https://img.shields.io/badge/python-3.8+-black)
-![Status](https://img.shields.io/badge/status-active-green)
 
 ---
 
-Intel CODE est un assistant IA en ligne de commande qui utilise Ollama avec un modèle abliterated de 4B paramètres. 
-Inspiré par Claude Code, il fonctionne entièrement en local, sans cloud, sans API payante, et sans aucune censure.
+Intel CODE est un assistant IA en ligne de commande. Modèle Qwen3 4B abliterated via Ollama. 100% local, gratuit, sans censure.
 
-Développé par **NasCorp** © 2026 — Projet indépendant (pas encore une entreprise certifiée).
+Développé par **NasCorp** © 2026 — Projet indépendant.
+
+---
+
+## Versions
+
+| Version | Modèle | Statut |
+|---------|--------|--------|
+| **CX1** | Qwen3 4B Abliterated | ✅ Actuelle |
+
 
 ---
 
 ## Installation
 
 ```bash
-git clone https://github.com/NasC0rp/intel-code-LLMV1.git
-cd intel-code-LLMV1
+git clone https://github.com/NasC0rp/INTEL-IA-LLMV1.git
+cd INTEL-IA-LLMV1
 chmod +x scripts/*.sh
 ./scripts/setup.sh
 ./scripts/start.sh
-```
 
 ## Prérequis
 
