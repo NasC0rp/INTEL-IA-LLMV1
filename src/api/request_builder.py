@@ -18,12 +18,16 @@ class RequestBuilder:
             except (json.JSONDecodeError, IOError):
                 pass
 
+    def _build_system(self, mode: str) -> str:
+        base = self.prompts.get(mode, self.prompts.get("default", ""))
+        return f"Reponds uniquement en francais. {base}"
+
     def build(self, prompt: str, model: str, mode: str = "default") -> Dict[str, Any]:
         tier = self.config.get_tier_config()
         num_ctx = tier.get("num_ctx", 2048)
         num_predict = tier.get("num_predict", 256)
         num_thread = tier.get("num_thread", 0)
-        system_prompt = self.prompts.get(mode, self.prompts.get("default", ""))
+        system_prompt = self._build_system(mode)
 
         messages: List[Dict[str, str]] = [
             {"role": "system", "content": system_prompt},
@@ -53,7 +57,7 @@ class RequestBuilder:
         return {
             "model": model,
             "messages": [
-                {"role": "system", "content": "Reponds en francais, clairement et brievement."},
+                {"role": "system", "content": self._build_system("default")},
                 {"role": "user", "content": prompt},
             ],
             "stream": False,
