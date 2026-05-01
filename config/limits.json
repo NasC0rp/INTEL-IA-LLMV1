@@ -3,16 +3,16 @@
     "free": {
       "max_messages": 30,
       "window_hours": 12,
-      "num_ctx": 1024,
-      "num_predict": 160,
+      "num_ctx": 4096,
+      "num_predict": 1024,
       "num_thread": 0,
       "requires_key": false
     },
     "vip": {
       "max_messages": 50,
       "window_hours": 12,
-      "num_ctx": 2048,
-      "num_predict": 320,
+      "num_ctx": 8048,
+      "num_predict": 2024,
       "num_thread": 0,
       "requires_key": true,
       "key_prefix": "INT3LK3Y_V1P"
@@ -20,8 +20,8 @@
     "unlimited": {
       "max_messages": 999,
       "window_hours": 1,
-      "num_ctx": 4096,
-      "num_predict": 640,
+      "num_ctx": 9096,
+      "num_predict": 4024,
       "num_thread": 0,
       "requires_key": true,
       "key_prefix": "INT3LK3Y_ULT1M3"
