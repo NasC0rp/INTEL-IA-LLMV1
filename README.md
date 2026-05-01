@@ -1,16 +1,27 @@
-# Intel CODE CX1
+# Intel CODE CX1.2
 
 Assistant IA en ligne de commande, local, base sur Ollama.
 
-![Version](https://img.shields.io/badge/version-CX1-red)
+![Version](https://img.shields.io/badge/version-CX1.2-red)
 ![License](https://img.shields.io/badge/license-MIT-darkred)
 ![Python](https://img.shields.io/badge/python-3.10+-black)
 
 > Projet independant NasCorp, non affilie a Intel Corporation.
 
+## Nouveautes CX1.2
+
+- API `/api/chat` au lieu de `/api/generate` (reponses stables sans corruption)
+- Streaming en temps reel (tokens affiches au fur et a mesure)
+- Optimisation des ecritures disque (batch saves avec flush a la fermeture)
+- Compatibilite Windows corrigee (RamChecker via psutil)
+- Retry avec exponential backoff en cas d'erreur Ollama
+- Prompt systeme ameliore avec instruction "reponds en francais uniquement"
+- Parametres par defaut optimises (temperature 0.4, repeat_penalty 1.2)
+
 ## Fonctionnalites
 
 - Assistant terminal local via Ollama
+- Streaming en temps reel des reponses
 - Modes de reponse: default, coder, concise, creative, teacher, hacker
 - Gestion de quota par tier: free, vip, unlimited
 - Cache local des reponses
@@ -26,9 +37,21 @@ Assistant IA en ligne de commande, local, base sur Ollama.
 | CPU | 2 coeurs | 3 coeurs |
 | Disque | 10 Go | 20 Go SSD |
 | Python | 3.10+ | 3.11+ |
-| OS | Linux / WSL2 | Ubuntu / Debian |
+| OS | Windows / Linux | Windows 10+ / Ubuntu |
 
 ## Installation
+
+### Windows
+
+```powershell
+git clone https://github.com/NasC0rp/INTEL-IA-LLMV1.git
+cd INTEL-IA-LLMV1
+pip install -r requirements.txt
+ollama pull intel-code
+python main.py
+```
+
+### Linux
 
 ```bash
 git clone https://github.com/NasC0rp/INTEL-IA-LLMV1.git
@@ -80,6 +103,14 @@ Intel CODE [free] > votre question
 | VIP | 50 | 12h | `INT3LK3Y_V1P-XXXX` |
 | Unlimited | 999 | 1h | `INT3LK3Y_ULT1M3-XXXX` |
 
+## Limites par tier
+
+| Tier | num_ctx | num_predict |
+|------|---------|-------------|
+| Free | 2048 | 256 |
+| VIP | 8048 | 2024 |
+| Unlimited | 9096 | 4024 |
+
 ## Renouvellement quota et tokens
 
 Le quota de messages se renouvelle automatiquement selon la fenetre du tier actif:
@@ -101,6 +132,15 @@ Les cles sensibles ne doivent pas etre commitees.
 3. Lancez l'application et utilisez la commande `key`.
 
 `config/keys.local.json` est ignore par Git.
+
+## Recree le modele Ollama
+
+Si tu as une ancienne version du modele, recree-le:
+
+```powershell
+ollama rm intel-code
+ollama create intel-code -f Modelfile
+```
 
 ## Structure
 
