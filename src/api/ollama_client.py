@@ -1,14 +1,15 @@
+import json
 import time
 import threading
-from typing import Any, Callable, Dict, Iterator, Optional
+from typing import Any, Callable, Dict, Optional
 
 import requests
 
 
 class OllamaClient:
     def __init__(self, config: Any, logger: Any = None) -> None:
-        self.host: str = config.get("ollama.host", "http://localhost:11434/api/generate")
-        self.base_url: str = self.host.removesuffix("/api/generate").rstrip("/")
+        self.base_url: str = config.get("ollama.host", "http://localhost:11434/api/generate").removesuffix("/api/generate").rstrip("/")
+        self.chat_url: str = f"{self.base_url}/api/chat"
         self.model: str = config.get("ollama.model", "intel-code")
         self.timeout: int = config.get("ollama.timeout", 180)
         self.logger: Any = logger
@@ -64,7 +65,8 @@ class OllamaClient:
                 if attempt < max_retries:
                     time.sleep(0.5 * attempt)
                     continue
-                return self.error_handler.handle(e, payload.get("prompt", ""))
+                user_prompt = payload.get("messages", [{"content": ""}])[-1].get("content", "")
+                return self.error_handler.handle(e, user_prompt)
         if self.logger:
             self.logger.warning(f"All {max_retries} attempts failed. Last error: {last_error}")
         self._last_error = last_error
@@ -74,7 +76,7 @@ class OllamaClient:
         is_stream = payload.get("stream", False)
         if is_stream:
             return self._stream_response(payload, on_token)
-        response: requests.Response = requests.post(self.host, json=payload, timeout=self.timeout)
+        response = requests.post(self.chat_url, json=payload, timeout=self.timeout)
         if response.status_code != 200:
             self._last_error = f"HTTP {response.status_code}: {response.text[:200]}"
             if self.logger:
@@ -85,7 +87,7 @@ class OllamaClient:
         self._last_eval_count = data.get("eval_count", 0)
         self._last_eval_seconds = data.get("eval_duration", 0) / 1_000_000_000
         self._last_total_seconds = data.get("total_duration", 0) / 1_000_000_000
-        text = data.get("response", "").strip()
+        text = data.get("message", {}).get("content", "").strip()
         if not text:
             self._last_error = "empty_response"
             if self.logger:
@@ -96,7 +98,7 @@ class OllamaClient:
         full_text: list = []
         last_chunk: Dict[str, Any] = {}
         try:
-            response = requests.post(self.host, json=payload, timeout=self.timeout, stream=True)
+            response = requests.post(self.chat_url, json=payload, timeout=self.timeout, stream=True)
             if response.status_code != 200:
                 self._last_error = f"HTTP {response.status_code}: {response.text[:200]}"
                 return f"Erreur {response.status_code}"
@@ -104,11 +106,11 @@ class OllamaClient:
                 if not line:
                     continue
                 try:
-                    chunk: Dict[str, Any] = __import__("json").loads(line.decode("utf-8"))
-                except __import__("json").JSONDecodeError:
+                    chunk: Dict[str, Any] = json.loads(line.decode("utf-8"))
+                except json.JSONDecodeError:
                     continue
                 last_chunk = chunk
-                token: str = chunk.get("response", "")
+                token: str = chunk.get("message", {}).get("content", "")
                 if token:
                     full_text.append(token)
                     if on_token:
@@ -134,12 +136,12 @@ class OllamaClient:
                 return
             payload: Dict[str, Any] = {
                 "model": self.model,
-                "prompt": "ping",
+                "messages": [{"role": "user", "content": "ping"}],
                 "stream": False,
                 "options": {"num_predict": 1, "num_ctx": 128, "temperature": 0.1},
             }
             try:
-                requests.post(self.host, json=payload, timeout=10)
+                requests.post(self.chat_url, json=payload, timeout=10)
             except requests.exceptions.RequestException:
                 pass
             self._warmed = True
