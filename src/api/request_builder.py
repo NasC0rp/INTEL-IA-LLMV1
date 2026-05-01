@@ -28,9 +28,8 @@ class RequestBuilder:
         system_prompt = self.prompts.get(mode, self.prompts.get("default", ""))
         full_prompt = (
             f"{system_prompt}\n\n"
-            "Consigne vitesse: reponds directement, sans introduction longue, sans liste exhaustive sauf si demande.\n\n"
-            f"Question: {prompt}\n\n"
-            "Reponse courte:"
+            f"Utilisateur: {prompt}\n"
+            "Assistant:"
         )
 
         options: Dict[str, Any] = {
@@ -39,7 +38,7 @@ class RequestBuilder:
             "top_p": 0.9,
             "repeat_penalty": 1.1,
             "num_predict": num_predict,
-            "stop": ["\nQuestion:", "\nUtilisateur:", "\nUser:"],
+            "stop": ["\nUtilisateur:", "\nUser:"],
         }
         if num_thread and num_thread > 0:
             options["num_thread"] = num_thread
@@ -50,4 +49,19 @@ class RequestBuilder:
             "stream": False,
             "keep_alive": self.config.get("ollama.keep_alive", "15m"),
             "options": options,
+        }
+
+    def build_retry(self, prompt: str, model: str) -> Dict[str, Any]:
+        return {
+            "model": model,
+            "prompt": f"Reponds en francais, clairement et brievement.\nQuestion: {prompt}\nReponse:",
+            "stream": False,
+            "keep_alive": self.config.get("ollama.keep_alive", "15m"),
+            "options": {
+                "num_ctx": 1024,
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "repeat_penalty": 1.05,
+                "num_predict": 128,
+            },
         }

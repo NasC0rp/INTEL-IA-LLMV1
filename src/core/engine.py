@@ -143,7 +143,7 @@ class IntelGPTEngine:
                     tokens_per_second = self.ollama.get_last_tokens_per_second()
                     print_colored(f"[{elapsed:.1f}s] [{tokens_per_second:.1f} tok/s] [messages:{remaining}] [mode:{self.current_mode}] [tier:{self.current_tier}]", Colors.GRAY)
                 else:
-                    print_colored(f"\n{response or '[ERREUR] Reponse vide du modele. Reessayez ou changez de mode.'}\n", Colors.RED)
+                    print_colored(f"\n{response or '[ERREUR] Reponse vide du modele apres deux essais.'}\n", Colors.RED)
 
             except KeyboardInterrupt:
                 self.running = False

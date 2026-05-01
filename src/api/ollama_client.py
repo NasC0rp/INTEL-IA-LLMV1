@@ -26,17 +26,24 @@ class OllamaClient:
             self.warmup()
         payload: Dict[str, Any] = self.builder.build(prompt, self.model, mode)
         try:
-            response: requests.Response = requests.post(self.host, json=payload, timeout=self.timeout)
-            if response.status_code != 200:
-                return f"Erreur {response.status_code}: {response.text[:200]}"
-            data: Dict[str, Any] = response.json()
-            self.error_handler.reset()
-            self._last_eval_count = data.get("eval_count", 0)
-            self._last_eval_seconds = data.get("eval_duration", 0) / 1_000_000_000
-            self._last_total_seconds = data.get("total_duration", 0) / 1_000_000_000
-            return data.get("response", "").strip()
+            text = self._generate_payload(payload)
+            if text:
+                return text
+            retry_payload = self.builder.build_retry(prompt, self.model)
+            return self._generate_payload(retry_payload)
         except requests.exceptions.RequestException as e:
             return self.error_handler.handle(e, prompt)
+
+    def _generate_payload(self, payload: Dict[str, Any]) -> str:
+        response: requests.Response = requests.post(self.host, json=payload, timeout=self.timeout)
+        if response.status_code != 200:
+            return f"Erreur {response.status_code}: {response.text[:200]}"
+        data: Dict[str, Any] = response.json()
+        self.error_handler.reset()
+        self._last_eval_count = data.get("eval_count", 0)
+        self._last_eval_seconds = data.get("eval_duration", 0) / 1_000_000_000
+        self._last_total_seconds = data.get("total_duration", 0) / 1_000_000_000
+        return data.get("response", "").strip()
 
     def warmup(self) -> None:
         with self._lock:
