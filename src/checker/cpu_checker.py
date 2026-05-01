@@ -1,6 +1,7 @@
 import os
 import platform
 
+
 class CpuChecker:
     def check(self):
         cores = os.cpu_count()
@@ -8,7 +9,7 @@ class CpuChecker:
             return True, "CPU: Inconnu"
         arch = platform.processor() or platform.machine()
         if cores >= 3:
-            return True, f"CPU: {cores} cœurs ({arch}) - Optimal"
-        elif cores >= 2:
-            return True, f"CPU: {cores} cœurs ({arch}) - OK"
-        return False, f"CPU: {cores} cœurs - Insuffisant"
+            return True, f"CPU: {cores} coeurs ({arch}) - Optimal"
+        if cores >= 2:
+            return True, f"CPU: {cores} coeurs ({arch}) - OK"
+        return False, f"CPU: {cores} coeurs - Insuffisant"

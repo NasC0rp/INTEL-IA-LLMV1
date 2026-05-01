@@ -7,6 +7,7 @@ from src.api.error_handler import ErrorHandler
 class OllamaClient:
     def __init__(self, config: Any) -> None:
         self.host: str = config.get("ollama.host", "http://localhost:11434/api/generate")
+        self.base_url: str = self.host.removesuffix("/api/generate").rstrip("/")
         self.model: str = config.get("ollama.model", "intel-code")
         self.timeout: int = config.get("ollama.timeout", 120)
         self.builder: RequestBuilder = RequestBuilder(config)
@@ -47,7 +48,7 @@ class OllamaClient:
     def unload(self) -> None:
         try:
             requests.post(
-                "http://localhost:11434/api/generate",
+                f"{self.base_url}/api/generate",
                 json={"model": self.model, "prompt": "", "keep_alive": 0},
                 timeout=5
             )
@@ -56,7 +57,7 @@ class OllamaClient:
 
     def is_alive(self) -> bool:
         try:
-            r: requests.Response = requests.get("http://localhost:11434/api/tags", timeout=3)
+            r: requests.Response = requests.get(f"{self.base_url}/api/tags", timeout=3)
             if r.ok:
                 models: list = [m["name"] for m in r.json().get("models", [])]
                 return self.model in models or f"{self.model}:latest" in models
@@ -66,7 +67,7 @@ class OllamaClient:
 
     def get_available_models(self) -> list:
         try:
-            r: requests.Response = requests.get("http://localhost:11434/api/tags", timeout=3)
+            r: requests.Response = requests.get(f"{self.base_url}/api/tags", timeout=3)
             if r.ok:
                 return [m["name"] for m in r.json().get("models", [])]
         except requests.exceptions.RequestException:

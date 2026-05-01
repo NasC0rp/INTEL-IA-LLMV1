@@ -20,6 +20,8 @@ class Updater:
         return "0.0.0"
 
     def check(self) -> None:
+        if not self.github_repo:
+            return
         cache_file: str = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'cache', '.version_cache')
         if os.path.exists(cache_file):
             try:
@@ -30,7 +32,7 @@ class Updater:
                         if self._compare_versions(self.current_version, self.latest_version) < 0:
                             self.update_available = True
                         return
-            except:
+            except (json.JSONDecodeError, IOError, TypeError):
                 pass
         url: str = f"https://raw.githubusercontent.com/{self.github_repo}/{self.github_branch}/.version"
         try:
@@ -42,7 +44,7 @@ class Updater:
                     json.dump({"version": self.latest_version, "timestamp": time.time()}, f)
                 if self._compare_versions(self.current_version, self.latest_version) < 0:
                     self.update_available = True
-        except:
+        except requests.exceptions.RequestException:
             pass
 
     def _compare_versions(self, v1: str, v2: str | None) -> int:
@@ -57,7 +59,7 @@ class Updater:
                 if a < b: return -1
                 if a > b: return 1
             return 0
-        except:
+        except (TypeError, ValueError):
             return 0
 
     def get_update_command(self) -> str:

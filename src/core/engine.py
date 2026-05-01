@@ -1,28 +1,28 @@
-import sys
 import os
+import sys
 import time
-import json
 from typing import Any
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
 from src.api.ollama_client import OllamaClient
-from src.managers.quota_manager import QuotaManager
+from src.checker.system_checker import SystemChecker
+from src.core.updater import Updater
 from src.managers.cache_manager import CacheManager
 from src.managers.history_manager import HistoryManager
-from src.managers.session_manager import SessionManager
-from src.managers.memory_manager import MemoryManager
 from src.managers.key_manager import KeyManager
-from src.checker.system_checker import SystemChecker
-from src.utils.colors import Colors, print_colored, clear_screen
+from src.managers.memory_manager import MemoryManager
+from src.managers.quota_manager import QuotaManager
+from src.managers.session_manager import SessionManager
+from src.utils.colors import Colors, clear_screen, print_colored
 from src.utils.formatter import Formatter
-from src.core.updater import Updater
 
-BANNER = """
-██╗      ██╗███╗   ██╗████████╗███████╗██╗          ██████╗ ██████╗ ██████╗ ███████╗
-╚██╗     ██║████╗  ██║╚══██╔══╝██╔════╝██║         ██╔════╝██╔═══██╗██╔══██╗██╔════╝
- ╚██╗    ██║██╔██╗ ██║   ██║   █████╗  ██║         ██║     ██║   ██║██║  ██║█████╗  
- ██╔╝    ██║██║╚██╗██║   ██║   ██╔══╝  ██║         ██║     ██║   ██║██║  ██║██╔══╝  
-██╔╝     ██║██║ ╚████║   ██║   ███████╗███████╗    ╚██████╗╚██████╔╝██████╔╝███████╗
-╚═╝      ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚══════╝     ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝
+BANNER = r"""
+  ___       _       _    ____ ___  ____  _____
+ |_ _|_ __ | |_ ___| |  / ___/ _ \|  _ \| ____|
+  | || '_ \| __/ _ \ | | |  | | | | | | |  _|
+  | || | | | ||  __/ | | |__| |_| | |_| | |___
+ |___|_| |_|\__\___|_|  \____\___/|____/|_____|
 """
 
 COMMANDS = {
@@ -36,8 +36,9 @@ COMMANDS = {
     "key": "Activer une cle VIP/Unlimited",
     "tier": "Voir le tier actuel",
     "tokens": "Tokens restants",
-    "help": "Aide"
+    "help": "Aide",
 }
+
 
 class IntelGPTEngine:
     def __init__(self, config: Any, logger: Any) -> None:
@@ -55,17 +56,11 @@ class IntelGPTEngine:
         self.formatter: Formatter = Formatter()
         self.running: bool = False
         self.current_mode: str = "default"
-        self.current_tier: str = "free"
+        self.current_tier: str = self.config.get_tier()
         self._update_tier_config()
 
     def _update_tier_config(self) -> None:
-        limits_file: str = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'limits.json')
-        if os.path.exists(limits_file):
-            with open(limits_file, 'r', encoding='utf-8') as f:
-                limits: dict = json.load(f)
-            limits["current_tier"] = self.current_tier
-            with open(limits_file, 'w', encoding='utf-8') as f:
-                json.dump(limits, f, indent=2)
+        self.config.set_tier(self.current_tier)
 
     def run(self) -> None:
         self.running = True
@@ -78,7 +73,7 @@ class IntelGPTEngine:
 
     def _show_banner(self) -> None:
         print_colored(BANNER, Colors.RED)
-        print_colored("                     Projet NasCorp © 2026", Colors.YELLOW)
+        print_colored("                     Projet NasCorp (2026)", Colors.YELLOW)
         tier_color: str = Colors.GREEN if self.current_tier == "free" else Colors.MAGENTA if self.current_tier == "vip" else Colors.CYAN
         print_colored(f"                     Tier: {self.current_tier.upper()}", tier_color)
         print_colored("                     'help' pour les commandes\n", Colors.GRAY)
@@ -87,21 +82,21 @@ class IntelGPTEngine:
         ok: bool
         results: list
         ok, results = self.checker.check_all()
-        print_colored("═══ VERIFICATION ═══", Colors.CYAN)
+        print_colored("=== VERIFICATION ===", Colors.CYAN)
         for status, msg in results:
-            tag: str = "[✓]" if status else "[✗]"
+            tag: str = "[OK]" if status else "[KO]"
             color: str = Colors.GREEN if status else Colors.RED
             print_colored(f"  {tag} {msg}", color)
-        print_colored("════════════════════\n", Colors.CYAN)
+        print_colored("====================\n", Colors.CYAN)
         if not ok:
-            print_colored("⚠️  Certains checks ont echoue.\n", Colors.YELLOW)
+            print_colored("Attention: certains checks ont echoue.\n", Colors.YELLOW)
         self.memory.optimize()
 
     def _check_updates(self) -> None:
         self.updater.check()
         if self.updater.update_available:
-            print_colored(f"⬆️  Nouvelle version dispo : v{self.updater.latest_version}", Colors.YELLOW)
-            print_colored(f"   → {self.updater.get_update_command()}\n", Colors.GRAY)
+            print_colored(f"Nouvelle version disponible: v{self.updater.latest_version}", Colors.YELLOW)
+            print_colored(f"   -> {self.updater.get_update_command()}\n", Colors.GRAY)
 
     def _chat_loop(self) -> None:
         session_id: str = self.session.create()
@@ -113,6 +108,7 @@ class IntelGPTEngine:
 
                 if prompt.lower() in COMMANDS:
                     self._handle_command(prompt.lower(), session_id)
+                    remaining = self.quota.get_remaining(session_id)
                     continue
 
                 if not prompt.strip():
@@ -154,7 +150,7 @@ class IntelGPTEngine:
         self._shutdown(session_id)
 
     def _activate_key(self) -> None:
-        print_colored("\n═══ ACTIVATION CLE ═══", Colors.CYAN)
+        print_colored("\n=== ACTIVATION CLE ===", Colors.CYAN)
         print_colored("Formats: INT3LK3Y_V1P-XXXX ou INT3LK3Y_ULT1M3-XXXX", Colors.GRAY)
         key: str = input(f"{Colors.YELLOW}Cle > {Colors.NC}").strip()
 
@@ -166,13 +162,13 @@ class IntelGPTEngine:
         if tier == "vip":
             self.current_tier = "vip"
             self._update_tier_config()
-            print_colored("✅ Cle VIP activee ! 50 messages/12h debloques.", Colors.GREEN)
+            print_colored("Cle VIP activee. 50 messages/12h debloques.", Colors.GREEN)
         elif tier == "unlimited":
             self.current_tier = "unlimited"
             self._update_tier_config()
-            print_colored("✅ Cle UNLIMITED activee ! Quota illimite.", Colors.CYAN)
+            print_colored("Cle UNLIMITED activee. Quota eleve debloque.", Colors.CYAN)
         else:
-            print_colored("❌ Cle invalide.", Colors.RED)
+            print_colored("Cle invalide.", Colors.RED)
 
     def _handle_command(self, cmd: str, session_id: str) -> None:
         if cmd == "exit":
@@ -200,7 +196,7 @@ class IntelGPTEngine:
             models: list = self.ollama.get_available_models()
             print_colored("Modeles disponibles :", Colors.CYAN)
             for m in models:
-                print_colored(f"  • {m}", Colors.GRAY)
+                print_colored(f"  - {m}", Colors.GRAY)
         elif cmd == "key":
             self._activate_key()
         elif cmd == "tier":
@@ -213,20 +209,20 @@ class IntelGPTEngine:
             bar_length: int = 20
             filled: int = int((used / max_tokens) * bar_length) if max_tokens > 0 else 0
             filled = min(filled, bar_length)
-            bar: str = "|" + "█" * filled + "░" * (bar_length - filled) + "|"
+            bar: str = "|" + "#" * filled + "." * (bar_length - filled) + "|"
             print_colored(f"Tokens : {bar} {used}/{max_tokens} utilises ({remaining} restants)", Colors.CYAN)
         elif cmd == "help":
             print_colored("\nCommandes :", Colors.CYAN)
             for c, d in COMMANDS.items():
-                print_colored(f"  {c:10} → {d}", Colors.GRAY)
+                print_colored(f"  {c:10} -> {d}", Colors.GRAY)
             print_colored("\nTiers disponibles :", Colors.CYAN)
-            print_colored("  FREE      → 30 msg/12h (gratuit)", Colors.GREEN)
-            print_colored("  VIP       → 50 msg/12h (cle INT3LK3Y_V1P-XXXX)", Colors.MAGENTA)
-            print_colored("  UNLIMITED → 999 msg/h  (cle INT3LK3Y_ULT1M3-XXXX)", Colors.CYAN)
+            print_colored("  FREE      -> 30 msg/12h (gratuit)", Colors.GREEN)
+            print_colored("  VIP       -> 50 msg/12h (cle INT3LK3Y_V1P-XXXX)", Colors.MAGENTA)
+            print_colored("  UNLIMITED -> 999 msg/h  (cle INT3LK3Y_ULT1M3-XXXX)", Colors.CYAN)
             print()
 
     def _shutdown(self, session_id: str) -> None:
         self.session.end(session_id)
         self.memory.cleanup()
         self.ollama.unload()
-        print_colored("\n╚═══ Session terminee ═══╝\n", Colors.RED)
+        print_colored("\nSession terminee.\n", Colors.RED)

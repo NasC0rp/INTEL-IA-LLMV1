@@ -15,27 +15,39 @@ class QuotaManager:
             "window_hours": tier.get("window_hours", 12)
         }
 
+    def _quota_key(self, session_id: str) -> str:
+        return f"tier:{self.config.get_tier()}"
+
     def get_remaining(self, session_id: str) -> int:
         cfg: Dict[str, int] = self._get_tier_config()
         data: Dict[str, Any] = self._load()
-        if session_id not in data:
-            data[session_id] = {"count": 0, "start": datetime.now().isoformat()}
+        key: str = self._quota_key(session_id)
+        if key not in data:
+            data[key] = {"count": 0, "start": datetime.now().isoformat()}
             self._save(data)
             return cfg["max_messages"]
-        entry: Dict[str, Any] = data[session_id]
+        entry: Dict[str, Any] = data[key]
         start: datetime = datetime.fromisoformat(entry["start"])
         if datetime.now() - start > timedelta(hours=cfg["window_hours"]):
-            data[session_id] = {"count": 0, "start": datetime.now().isoformat()}
+            data[key] = {"count": 0, "start": datetime.now().isoformat()}
             self._save(data)
             return cfg["max_messages"]
         return max(0, cfg["max_messages"] - entry["count"])
 
     def use(self, session_id: str) -> None:
+        cfg: Dict[str, int] = self._get_tier_config()
         data: Dict[str, Any] = self._load()
-        if session_id not in data:
-            data[session_id] = {"count": 1, "start": datetime.now().isoformat()}
+        key: str = self._quota_key(session_id)
+        now: datetime = datetime.now()
+        if key not in data:
+            data[key] = {"count": 1, "start": now.isoformat()}
         else:
-            data[session_id]["count"] += 1
+            entry: Dict[str, Any] = data[key]
+            start: datetime = datetime.fromisoformat(entry["start"])
+            if now - start > timedelta(hours=cfg["window_hours"]):
+                data[key] = {"count": 1, "start": now.isoformat()}
+            else:
+                data[key]["count"] += 1
         self._save(data)
 
     def _load(self) -> Dict[str, Any]:

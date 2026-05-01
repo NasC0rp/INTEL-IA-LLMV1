@@ -4,8 +4,11 @@ from typing import Dict, List, Optional
 
 class KeyManager:
     def __init__(self) -> None:
-        keys_file: str = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'keys.json')
+        config_dir: str = os.path.join(os.path.dirname(__file__), '..', '..', 'config')
+        self.keys_file: str = os.path.join(config_dir, 'keys.local.json')
+        fallback_file: str = os.path.join(config_dir, 'keys.json')
         self.valid_keys: Dict[str, List[str]] = {"vip": [], "unlimited": []}
+        keys_file: str = self.keys_file if os.path.exists(self.keys_file) else fallback_file
         if os.path.exists(keys_file):
             try:
                 with open(keys_file, 'r', encoding='utf-8') as f:
@@ -42,7 +45,6 @@ class KeyManager:
         return self.valid_keys
 
     def _save(self) -> None:
-        keys_file: str = os.path.join(os.path.dirname(__file__), '..', '..', 'config', 'keys.json')
-        os.makedirs(os.path.dirname(keys_file), exist_ok=True)
-        with open(keys_file, 'w', encoding='utf-8') as f:
+        os.makedirs(os.path.dirname(self.keys_file), exist_ok=True)
+        with open(self.keys_file, 'w', encoding='utf-8') as f:
             json.dump(self.valid_keys, f, indent=2)
