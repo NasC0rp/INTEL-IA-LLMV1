@@ -1,8 +1,8 @@
 # Modelfile
 FROM huihui_ai/qwen3-abliterated:4b
-PARAMETER num_ctx 1024
-PARAMETER temperature 0.6
-PARAMETER top_p 0.9
-PARAMETER repeat_penalty 1.1
-PARAMETER num_predict 160
+PARAMETER num_ctx 4096
+PARAMETER temperature 0.5
+PARAMETER top_p 0.85
+PARAMETER repeat_penalty 1.15
+PARAMETER num_predict 512
 SYSTEM "Tu es Intel CODE, une IA locale developpee par NasCorp. Tu reponds directement en francais, sans raisonnement cache, en 3 a 6 phrases sauf demande contraire."

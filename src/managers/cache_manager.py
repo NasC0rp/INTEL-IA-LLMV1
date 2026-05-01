@@ -1,8 +1,10 @@
 import json
 import os
 import hashlib
+import atexit
 from collections import OrderedDict
 from typing import Optional, Any
+
 
 class CacheManager:
     def __init__(self, config: Any) -> None:
@@ -10,7 +12,9 @@ class CacheManager:
         self.cache_file: str = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'cache', '.responses')
         os.makedirs(os.path.dirname(self.cache_file), exist_ok=True)
         self.cache: OrderedDict = OrderedDict()
+        self._dirty: bool = False
         self._load()
+        atexit.register(self._save_if_dirty)
 
     def get(self, prompt: str) -> Optional[str]:
         key: str = hashlib.md5(prompt.encode()).hexdigest()
@@ -27,14 +31,19 @@ class CacheManager:
             if len(self.cache) >= self.max_size:
                 self.cache.popitem(last=False)
         self.cache[key] = response
-        self._save()
+        self._dirty = True
 
     def size(self) -> int:
         return len(self.cache)
 
     def clear(self) -> None:
         self.cache.clear()
+        self._dirty = True
         self._save()
+
+    def flush(self) -> None:
+        if self._dirty:
+            self._save()
 
     def _load(self) -> None:
         if os.path.exists(self.cache_file):
@@ -46,6 +55,13 @@ class CacheManager:
                 pass
 
     def _save(self) -> None:
-        os.makedirs(os.path.dirname(self.cache_file), exist_ok=True)
-        with open(self.cache_file, 'w', encoding='utf-8') as f:
-            json.dump(dict(self.cache), f)
+        try:
+            with open(self.cache_file, 'w', encoding='utf-8') as f:
+                json.dump(dict(self.cache), f)
+            self._dirty = False
+        except IOError:
+            pass
+
+    def _save_if_dirty(self) -> None:
+        if self._dirty:
+            self._save()

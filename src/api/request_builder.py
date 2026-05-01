@@ -20,11 +20,9 @@ class RequestBuilder:
 
     def build(self, prompt: str, model: str, mode: str = "default") -> Dict[str, Any]:
         tier = self.config.get_tier_config()
-        num_ctx = tier.get("num_ctx", 1024)
-        num_predict = tier.get("num_predict", 160)
+        num_ctx = tier.get("num_ctx", 4096)
+        num_predict = tier.get("num_predict", 512)
         num_thread = tier.get("num_thread", 0)
-        if mode in {"default", "concise"} and len(prompt) <= 160:
-            num_predict = min(num_predict, 96)
         system_prompt = self.prompts.get(mode, self.prompts.get("default", ""))
         full_prompt = (
             f"{system_prompt}\n\n"
@@ -34,9 +32,10 @@ class RequestBuilder:
 
         options: Dict[str, Any] = {
             "num_ctx": num_ctx,
-            "temperature": 0.6,
-            "top_p": 0.9,
-            "repeat_penalty": 1.1,
+            "temperature": 0.5,
+            "top_p": 0.85,
+            "repeat_penalty": 1.15,
+            "top_k": 40,
             "num_predict": num_predict,
             "stop": ["\nUtilisateur:", "\nUser:"],
         }
@@ -58,10 +57,10 @@ class RequestBuilder:
             "stream": False,
             "keep_alive": self.config.get("ollama.keep_alive", "15m"),
             "options": {
-                "num_ctx": 1024,
-                "temperature": 0.7,
-                "top_p": 0.9,
-                "repeat_penalty": 1.05,
-                "num_predict": 128,
+                "num_ctx": 2048,
+                "temperature": 0.5,
+                "top_p": 0.85,
+                "repeat_penalty": 1.1,
+                "num_predict": 256,
             },
         }

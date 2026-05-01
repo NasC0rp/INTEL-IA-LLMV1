@@ -1,6 +1,3 @@
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from src.checker.cpu_checker import CpuChecker
 from src.checker.ram_checker import RamChecker
 from src.checker.disk_checker import DiskChecker

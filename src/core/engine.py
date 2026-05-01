@@ -4,8 +4,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
 from src.api.ollama_client import OllamaClient
 from src.checker.system_checker import SystemChecker
 from src.core.updater import Updater
@@ -136,12 +134,23 @@ class IntelGPTEngine:
 
                 print_colored("\nReflexion...", Colors.GRAY)
                 start_time: float = time.time()
-                response: str = self.ollama.generate(prompt, self.current_mode)
+                token_buf: list[str] = []
+                token_count: int = [0]
+
+                def _on_token(token: str) -> None:
+                    token_buf.append(token)
+                    token_count[0] += 1
+                    if token_count[0] % 4 == 0:
+                        sys.stdout.write(Colors.GRAY + token + Colors.NC)
+                        sys.stdout.flush()
+
+                response: str = self.ollama.generate_streaming(prompt, self.current_mode, on_token=_on_token)
                 elapsed: float = time.time() - start_time
 
                 if response and not response.startswith("Erreur"):
+                    sys.stdout.write("\n")
                     formatted: str = self.formatter.format(response)
-                    print_colored(f"\n{formatted}\n", Colors.WHITE)
+                    print_colored(f"{formatted}\n", Colors.WHITE)
                     self.cache.set(prompt, response)
                     self.history.add(self.session_id, prompt, response)
                     self.quota.use(self.session_id)
