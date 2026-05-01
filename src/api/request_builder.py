@@ -27,7 +27,6 @@ class RequestBuilder:
             num_predict = min(num_predict, 96)
         system_prompt = self.prompts.get(mode, self.prompts.get("default", ""))
         full_prompt = (
-            "/no_think\n"
             f"{system_prompt}\n\n"
             "Consigne vitesse: reponds directement, sans introduction longue, sans liste exhaustive sauf si demande.\n\n"
             f"Question: {prompt}\n\n"

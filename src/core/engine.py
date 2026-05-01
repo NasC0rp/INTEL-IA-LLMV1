@@ -17,12 +17,13 @@ from src.managers.session_manager import SessionManager
 from src.utils.colors import Colors, clear_screen, print_colored
 from src.utils.formatter import Formatter
 
-BANNER = r"""
-  ___       _       _    ____ ___  ____  _____
- |_ _|_ __ | |_ ___| |  / ___/ _ \|  _ \| ____|
-  | || '_ \| __/ _ \ | | |  | | | | | | |  _|
-  | || | | | ||  __/ | | |__| |_| | |_| | |___
- |___|_| |_|\__\___|_|  \____\___/|____/|_____|
+BANNER = """
+█╗      ██╗███╗   ██╗████████╗███████╗██╗         ██╗ █████╗
+╚██╗     ██║████╗  ██║╚══██╔══╝██╔════╝██║         ██║██╔══██╗
+ ╚██╗    ██║██╔██╗ ██║   ██║   █████╗  ██║         ██║███████║
+ ██╔╝    ██║██║╚██╗██║   ██║   ██╔══╝  ██║         ██║██╔══██║
+██╔╝     ██║██║ ╚████║   ██║   ███████╗███████╗    ██║██║  ██║
+╚═╝      ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚══════╝    ╚═╝╚═╝  ╚═╝
 """
 
 COMMANDS = {
@@ -142,7 +143,7 @@ class IntelGPTEngine:
                     tokens_per_second = self.ollama.get_last_tokens_per_second()
                     print_colored(f"[{elapsed:.1f}s] [{tokens_per_second:.1f} tok/s] [messages:{remaining}] [mode:{self.current_mode}] [tier:{self.current_tier}]", Colors.GRAY)
                 else:
-                    print_colored(f"\n{response or '[ERREUR] Verifiez qu Ollama est lance.'}\n", Colors.RED)
+                    print_colored(f"\n{response or '[ERREUR] Reponse vide du modele. Reessayez ou changez de mode.'}\n", Colors.RED)
 
             except KeyboardInterrupt:
                 self.running = False
