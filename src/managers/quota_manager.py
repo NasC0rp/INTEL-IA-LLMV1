@@ -55,7 +55,7 @@ class QuotaManager:
             try:
                 with open(self.quota_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
+            except:
                 pass
         return {}
 

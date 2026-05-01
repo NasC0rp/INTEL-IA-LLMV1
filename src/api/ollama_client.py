@@ -1,8 +1,11 @@
-import requests
 import threading
-from typing import Dict, Any
-from src.api.request_builder import RequestBuilder
+from typing import Any, Dict
+
+import requests
+
 from src.api.error_handler import ErrorHandler
+from src.api.request_builder import RequestBuilder
+
 
 class OllamaClient:
     def __init__(self, config: Any) -> None:
@@ -14,7 +17,6 @@ class OllamaClient:
         self.error_handler: ErrorHandler = ErrorHandler()
         self._warmed: bool = False
         self._lock: threading.Lock = threading.Lock()
-        self._last_tokens: int = 0
         self._last_eval_count: int = 0
 
     def generate(self, prompt: str, mode: str = "default") -> str:
@@ -23,11 +25,11 @@ class OllamaClient:
         payload: Dict[str, Any] = self.builder.build(prompt, self.model, mode)
         try:
             response: requests.Response = requests.post(self.host, json=payload, timeout=self.timeout)
-            response.raise_for_status()
+            if response.status_code != 200:
+                return f"Erreur {response.status_code}: {response.text[:200]}"
             data: Dict[str, Any] = response.json()
             self.error_handler.reset()
             self._last_eval_count = data.get("eval_count", 0)
-            self._last_tokens = payload["options"]["num_predict"] - self._last_eval_count
             return data.get("response", "").strip()
         except requests.exceptions.RequestException as e:
             return self.error_handler.handle(e, prompt)
@@ -50,7 +52,7 @@ class OllamaClient:
             requests.post(
                 f"{self.base_url}/api/generate",
                 json={"model": self.model, "prompt": "", "keep_alive": 0},
-                timeout=5
+                timeout=5,
             )
         except requests.exceptions.RequestException:
             pass
@@ -59,7 +61,7 @@ class OllamaClient:
         try:
             r: requests.Response = requests.get(f"{self.base_url}/api/tags", timeout=3)
             if r.ok:
-                models: list = [m["name"] for m in r.json().get("models", [])]
+                models = [m["name"] for m in r.json().get("models", [])]
                 return self.model in models or f"{self.model}:latest" in models
         except requests.exceptions.RequestException:
             pass
@@ -73,9 +75,6 @@ class OllamaClient:
         except requests.exceptions.RequestException:
             pass
         return []
-
-    def get_last_tokens(self) -> int:
-        return max(0, self._last_tokens)
 
     def get_last_eval_count(self) -> int:
         return self._last_eval_count

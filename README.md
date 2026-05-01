@@ -1,6 +1,10 @@
-# Intel CODE
+# Intel CODE CX1
 
 Assistant IA en ligne de commande, local, base sur Ollama.
+
+![Version](https://img.shields.io/badge/version-CX1-red)
+![License](https://img.shields.io/badge/license-MIT-darkred)
+![Python](https://img.shields.io/badge/python-3.10+-black)
 
 > Projet independant NasCorp, non affilie a Intel Corporation.
 
@@ -37,24 +41,43 @@ chmod +x scripts/*.sh
 ## Utilisation
 
 ```text
-Intel CODE [free] > votre question ici
+Intel CODE [free] > votre question
 ```
 
 ## Commandes
 
 | Commande | Description |
 |----------|-------------|
-| help | Affiche l'aide |
-| mode | Change de mode |
-| quota | Affiche les messages restants |
-| cache | Affiche la taille du cache |
-| history | Affiche les derniers echanges |
-| models | Liste les modeles Ollama disponibles |
-| key | Active une cle VIP ou Unlimited |
-| tier | Affiche le tier actuel |
-| tokens | Affiche l'utilisation de tokens de la derniere reponse |
-| clear | Efface l'ecran |
-| exit | Quitte l'assistant |
+| `help` | Affiche l'aide |
+| `mode` | Change de mode |
+| `quota` | Affiche les messages restants |
+| `cache` | Affiche la taille du cache |
+| `history` | Affiche les derniers echanges |
+| `models` | Liste les modeles Ollama disponibles |
+| `key` | Active une cle VIP ou Unlimited |
+| `tier` | Affiche le tier actuel |
+| `tokens` | Affiche l'utilisation de tokens |
+| `clear` | Efface l'ecran |
+| `exit` | Quitte l'assistant |
+
+## Modes
+
+| Mode | Description |
+|------|-------------|
+| `default` | Assistant general |
+| `coder` | Code uniquement |
+| `concise` | Reponses courtes |
+| `creative` | Reponses detaillees |
+| `teacher` | Pedagogique |
+| `hacker` | Commandes techniques |
+
+## Tiers
+
+| Tier | Messages | Fenetre | Cle |
+|------|----------|---------|-----|
+| Free | 30 | 12h | Aucune |
+| VIP | 50 | 12h | `INT3LK3Y_V1P-XXXX` |
+| Unlimited | 999 | 1h | `INT3LK3Y_ULT1M3-XXXX` |
 
 ## Configuration des cles
 
@@ -66,30 +89,37 @@ Les cles sensibles ne doivent pas etre commitees.
 
 `config/keys.local.json` est ignore par Git.
 
-## Fichiers importants
+## Structure
 
 ```text
-main.py                  Point d'entree
-config/config.json       Configuration Ollama et systeme
-config/limits.json       Definition des tiers
-config/prompts.json      Prompts systeme des modes
-config/keys.example.json Exemple de fichier de cles
-src/core/engine.py       Boucle principale
-src/api/ollama_client.py Client Ollama
-src/managers/            Cache, quota, historique, sessions, cles
-scripts/setup.sh         Installation Linux / WSL2
-scripts/start.sh         Demarrage
+INTEL-IA-LLMV1/
+├── main.py
+├── requirements.txt
+├── Modelfile
+├── README.md
+├── config/
+│   ├── config.json
+│   ├── limits.json
+│   ├── prompts.json
+│   ├── models.json
+│   ├── keys.json
+│   └── keys.example.json
+├── scripts/
+│   ├── setup.sh
+│   ├── start.sh
+│   ├── dev.sh
+│   └── update.sh
+└── src/
+    ├── api/
+    ├── checker/
+    ├── core/
+    ├── managers/
+    └── utils/
 ```
 
 ## Donnees locales
 
-L'application cree automatiquement le dossier `data/` pour stocker:
-
-- cache des reponses
-- quota local
-- tier actif
-- historique
-- logs
+L'application cree automatiquement le dossier `data/` pour stocker le cache, le quota, le tier actif, l'historique et les logs.
 
 Ce dossier est ignore par Git.
 
@@ -99,6 +129,11 @@ Ce dossier est ignore par Git.
 python -m compileall main.py src
 ./scripts/dev.sh
 ```
+
+## Liens
+
+- GitHub : [NasC0rp/INTEL-IA-LLMV1](https://github.com/NasC0rp/INTEL-IA-LLMV1)
+- Telegram : [@IntelIA_NasCorp](https://t.me/IntelIA_NasCorp)
 
 ## Avertissement
 

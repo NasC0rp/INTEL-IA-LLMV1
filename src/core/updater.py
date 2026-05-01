@@ -1,8 +1,10 @@
-import requests
 import json
 import os
 import time
 from typing import Any
+
+import requests
+
 
 class Updater:
     def __init__(self, config: Any) -> None:
@@ -15,7 +17,7 @@ class Updater:
     def _get_local_version(self) -> str:
         version_file: str = os.path.join(os.path.dirname(__file__), '..', '..', '.version')
         if os.path.exists(version_file):
-            with open(version_file, 'r', encoding='utf-8') as f:
+            with open(version_file, "r", encoding="utf-8") as f:
                 return f.read().strip()
         return "0.0.0"
 
@@ -25,22 +27,23 @@ class Updater:
         cache_file: str = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'cache', '.version_cache')
         if os.path.exists(cache_file):
             try:
-                with open(cache_file, 'r', encoding='utf-8') as f:
+                with open(cache_file, "r", encoding="utf-8") as f:
                     data: dict = json.load(f)
-                    if time.time() - data.get("timestamp", 0) < 86400:
-                        self.latest_version = data.get("version")
-                        if self._compare_versions(self.current_version, self.latest_version) < 0:
-                            self.update_available = True
-                        return
+                if time.time() - data.get("timestamp", 0) < 86400:
+                    self.latest_version = data.get("version")
+                    if self._compare_versions(self.current_version, self.latest_version) < 0:
+                        self.update_available = True
+                    return
             except (json.JSONDecodeError, IOError, TypeError):
                 pass
+
         url: str = f"https://raw.githubusercontent.com/{self.github_repo}/{self.github_branch}/.version"
         try:
             r: requests.Response = requests.get(url, timeout=3)
             if r.status_code == 200:
                 self.latest_version = r.text.strip()
                 os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-                with open(cache_file, 'w', encoding='utf-8') as f:
+                with open(cache_file, "w", encoding="utf-8") as f:
                     json.dump({"version": self.latest_version, "timestamp": time.time()}, f)
                 if self._compare_versions(self.current_version, self.latest_version) < 0:
                     self.update_available = True
@@ -56,8 +59,10 @@ class Updater:
             for i in range(max(len(p1), len(p2))):
                 a: int = p1[i] if i < len(p1) else 0
                 b: int = p2[i] if i < len(p2) else 0
-                if a < b: return -1
-                if a > b: return 1
+                if a < b:
+                    return -1
+                if a > b:
+                    return 1
             return 0
         except (TypeError, ValueError):
             return 0

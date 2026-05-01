@@ -1,5 +1,6 @@
 import requests
 
+
 class NetworkChecker:
     def __init__(self, config):
         self.model = config.get("ollama.model", "intel-code")
@@ -12,7 +13,7 @@ class NetworkChecker:
                 models = [m["name"] for m in r.json().get("models", [])]
                 if self.model in models or f"{self.model}:latest" in models:
                     return True, f"Ollama: Actif - {self.model}"
-                return False, f"Ollama: Actif - {self.model} absent"
-            return False, "Ollama: Ne répond pas"
-        except:
-            return False, "Ollama: Non lancé"
+                return False, "Ollama: Actif - modele absent"
+            return False, "Ollama: Ne repond pas"
+        except requests.exceptions.RequestException:
+            return False, "Ollama: Non lance"
