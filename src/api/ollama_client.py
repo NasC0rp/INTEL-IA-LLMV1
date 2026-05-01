@@ -73,7 +73,7 @@ class OllamaClient:
     def _generate_payload(self, payload: Dict[str, Any], on_token: Optional[Callable[[str], None]] = None) -> str:
         is_stream = payload.get("stream", False)
         if is_stream:
-            return self._stream_response(on_token)
+            return self._stream_response(payload, on_token)
         response: requests.Response = requests.post(self.host, json=payload, timeout=self.timeout)
         if response.status_code != 200:
             self._last_error = f"HTTP {response.status_code}: {response.text[:200]}"
@@ -92,36 +92,34 @@ class OllamaClient:
                 self.logger.warning(f"Ollama empty response with payload options: {payload.get('options', {})}")
         return text
 
-    def _stream_response(self, on_token: Optional[Callable[[str], None]] = None) -> str:
+    def _stream_response(self, payload: Dict[str, Any], on_token: Optional[Callable[[str], None]] = None) -> str:
         full_text: list = []
-        start_time: float = time.time()
+        last_chunk: Dict[str, Any] = {}
         try:
-            with requests.post(self.host, json={"stream": True}, timeout=self.timeout, stream=True) as response:
-                if response.status_code != 200:
-                    self._last_error = f"HTTP {response.status_code}: {response.text[:200]}"
-                    return f"Erreur {response.status_code}"
-                total_duration_ns: int = 0
-                eval_count: int = 0
-                for line in response.iter_lines():
-                    if not line:
-                        continue
-                    try:
-                        chunk: Dict[str, Any] = __import__("json").loads(line.decode("utf-8"))
-                    except __import__("json").JSONDecodeError:
-                        continue
-                    token: str = chunk.get("response", "")
-                    if token:
-                        full_text.append(token)
-                        if on_token:
-                            on_token(token)
-                    eval_count = chunk.get("eval_count", 0)
-                    total_duration_ns = chunk.get("total_duration", 0)
-                    if chunk.get("done", False):
-                        break
+            response = requests.post(self.host, json=payload, timeout=self.timeout, stream=True)
+            if response.status_code != 200:
+                self._last_error = f"HTTP {response.status_code}: {response.text[:200]}"
+                return f"Erreur {response.status_code}"
+            for line in response.iter_lines():
+                if not line:
+                    continue
+                try:
+                    chunk: Dict[str, Any] = __import__("json").loads(line.decode("utf-8"))
+                except __import__("json").JSONDecodeError:
+                    continue
+                last_chunk = chunk
+                token: str = chunk.get("response", "")
+                if token:
+                    full_text.append(token)
+                    if on_token:
+                        on_token(token)
+                if chunk.get("done", False):
+                    break
+            response.close()
             self.error_handler.reset()
-            self._last_eval_count = eval_count
-            self._last_eval_seconds = chunk.get("eval_duration", 0) / 1_000_000_000
-            self._last_total_seconds = total_duration_ns / 1_000_000_000
+            self._last_eval_count = last_chunk.get("eval_count", 0)
+            self._last_eval_seconds = last_chunk.get("eval_duration", 0) / 1_000_000_000
+            self._last_total_seconds = last_chunk.get("total_duration", 0) / 1_000_000_000
             text = "".join(full_text).strip()
             if not text:
                 self._last_error = "empty_response"
