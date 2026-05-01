@@ -8,6 +8,7 @@ class CacheManager:
     def __init__(self, config: Any) -> None:
         self.max_size: int = config.get("system.cache_size", 100)
         self.cache_file: str = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'cache', '.responses')
+        os.makedirs(os.path.dirname(self.cache_file), exist_ok=True)
         self.cache: OrderedDict = OrderedDict()
         self._load()
 

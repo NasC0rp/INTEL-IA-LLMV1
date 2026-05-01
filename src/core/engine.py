@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -44,9 +45,10 @@ COMMANDS = {
 
 class IntelGPTEngine:
     def __init__(self, config: Any, logger: Any) -> None:
+        self._ensure_directories()
         self.config: Any = config
         self.logger: Any = logger
-        self.ollama: OllamaClient = OllamaClient(config)
+        self.ollama: OllamaClient = OllamaClient(config, logger)
         self.quota: QuotaManager = QuotaManager(config)
         self.cache: CacheManager = CacheManager(config)
         self.history: HistoryManager = HistoryManager(config)
@@ -61,6 +63,10 @@ class IntelGPTEngine:
         self.current_tier: str = self.config.get_tier()
         self.session_id: str = ""
         self._update_tier_config()
+
+    def _ensure_directories(self) -> None:
+        for directory in ("data/cache", "data/history", "data/logs", "data/sessions"):
+            Path(directory).mkdir(parents=True, exist_ok=True)
 
     def _update_tier_config(self) -> None:
         self.config.set_tier(self.current_tier)
@@ -143,7 +149,7 @@ class IntelGPTEngine:
                     tokens_per_second = self.ollama.get_last_tokens_per_second()
                     print_colored(f"[{elapsed:.1f}s] [{tokens_per_second:.1f} tok/s] [messages:{remaining}] [mode:{self.current_mode}] [tier:{self.current_tier}]", Colors.GRAY)
                 else:
-                    print_colored(f"\n{response or '[ERREUR] Reponse vide du modele apres deux essais.'}\n", Colors.RED)
+                    self._show_generation_error(response)
 
             except KeyboardInterrupt:
                 self.running = False
@@ -171,6 +177,18 @@ class IntelGPTEngine:
         else:
             print_colored("Cle invalide.", Colors.RED)
 
+    def _show_generation_error(self, response: str) -> None:
+        if response:
+            print_colored(f"\n[ERREUR OLLAMA] {response}\n", Colors.RED)
+            return
+
+        attempts = self.ollama.get_last_attempts()
+        last_error = self.ollama.get_last_error() or "empty_response"
+        print_colored("\n[ERREUR] Le modele n'a pas produit de texte.", Colors.RED)
+        print_colored(f"Tentatives: {attempts} | Diagnostic: {last_error}", Colors.GRAY)
+        print_colored("Causes possibles: requete refusee par le modele, prompt trop ambigu, modele mal cree, ou ressources insuffisantes.", Colors.YELLOW)
+        print_colored("Solutions: reformule la question, essaie le mode concise/coder, ou recrée le modele avec `ollama create intel-code -f Modelfile`.\n", Colors.GRAY)
+
     def _handle_command(self, cmd: str) -> None:
         if cmd == "exit":
             self.running = False
@@ -193,9 +211,14 @@ class IntelGPTEngine:
             self.current_mode = modes[(idx + 1) % len(modes)]
             print_colored(f"Mode : {self.current_mode}", Colors.GREEN)
         elif cmd == "models":
+            models = self.ollama.get_available_models()
+            if not models:
+                print_colored("Aucun modele trouve. Verifiez qu'Ollama est lance.", Colors.YELLOW)
+                return
             print_colored("Modeles disponibles :", Colors.CYAN)
-            for model in self.ollama.get_available_models():
-                print_colored(f"  - {model}", Colors.GRAY)
+            for index, model in enumerate(models, 1):
+                marker = " (actif)" if model == self.ollama.model or model == f"{self.ollama.model}:latest" else ""
+                print_colored(f"  {index}. {model}{marker}", Colors.GRAY)
         elif cmd == "key":
             self._activate_key()
         elif cmd == "tier":
@@ -203,12 +226,13 @@ class IntelGPTEngine:
         elif cmd == "tokens":
             max_tokens = self.config.get_tier_config().get("num_predict", 512)
             used = self.ollama.get_last_eval_count()
+            speed = self.ollama.get_last_tokens_per_second()
             remaining = max(0, max_tokens - used)
             bar_len = 20
             filled = int((used / max_tokens) * bar_len) if max_tokens > 0 else 0
             filled = min(filled, bar_len)
             bar = "|" + "#" * filled + "-" * (bar_len - filled) + "|"
-            print_colored(f"Tokens : {bar} {used}/{max_tokens} utilises ({remaining} restants)", Colors.CYAN)
+            print_colored(f"Tokens : {bar} {used}/{max_tokens} utilises ({remaining} restants) | {speed:.1f} tok/s", Colors.CYAN)
         elif cmd == "speed":
             tokens_per_second = self.ollama.get_last_tokens_per_second()
             total_seconds = self.ollama.get_last_total_seconds()

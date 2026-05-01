@@ -8,11 +8,12 @@ from src.api.request_builder import RequestBuilder
 
 
 class OllamaClient:
-    def __init__(self, config: Any) -> None:
+    def __init__(self, config: Any, logger: Any = None) -> None:
         self.host: str = config.get("ollama.host", "http://localhost:11434/api/generate")
         self.base_url: str = self.host.removesuffix("/api/generate").rstrip("/")
         self.model: str = config.get("ollama.model", "intel-code")
         self.timeout: int = config.get("ollama.timeout", 120)
+        self.logger: Any = logger
         self.builder: RequestBuilder = RequestBuilder(config)
         self.error_handler: ErrorHandler = ErrorHandler()
         self._warmed: bool = False
@@ -20,30 +21,46 @@ class OllamaClient:
         self._last_eval_count: int = 0
         self._last_eval_seconds: float = 0.0
         self._last_total_seconds: float = 0.0
+        self._last_attempts: int = 0
+        self._last_error: str = ""
 
     def generate(self, prompt: str, mode: str = "default") -> str:
         if not self._warmed:
             self.warmup()
         payload: Dict[str, Any] = self.builder.build(prompt, self.model, mode)
         try:
+            self._last_attempts = 1
+            self._last_error = ""
             text = self._generate_payload(payload)
-            if text:
+            if text and not text.startswith("Erreur"):
                 return text
+            if self.logger:
+                self.logger.warning(f"Reponse vide ou erreur en mode {mode}. Retry fallback.")
             retry_payload = self.builder.build_retry(prompt, self.model)
+            self._last_attempts = 2
             return self._generate_payload(retry_payload)
         except requests.exceptions.RequestException as e:
+            self._last_error = str(e)
             return self.error_handler.handle(e, prompt)
 
     def _generate_payload(self, payload: Dict[str, Any]) -> str:
         response: requests.Response = requests.post(self.host, json=payload, timeout=self.timeout)
         if response.status_code != 200:
+            self._last_error = f"HTTP {response.status_code}: {response.text[:200]}"
+            if self.logger:
+                self.logger.error(f"Ollama error: {self._last_error}")
             return f"Erreur {response.status_code}: {response.text[:200]}"
         data: Dict[str, Any] = response.json()
         self.error_handler.reset()
         self._last_eval_count = data.get("eval_count", 0)
         self._last_eval_seconds = data.get("eval_duration", 0) / 1_000_000_000
         self._last_total_seconds = data.get("total_duration", 0) / 1_000_000_000
-        return data.get("response", "").strip()
+        text = data.get("response", "").strip()
+        if not text:
+            self._last_error = "empty_response"
+            if self.logger:
+                self.logger.warning(f"Ollama empty response with payload options: {payload.get('options', {})}")
+        return text
 
     def warmup(self) -> None:
         with self._lock:
@@ -97,3 +114,9 @@ class OllamaClient:
 
     def get_last_total_seconds(self) -> float:
         return self._last_total_seconds
+
+    def get_last_attempts(self) -> int:
+        return self._last_attempts
+
+    def get_last_error(self) -> str:
+        return self._last_error

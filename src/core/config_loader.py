@@ -1,5 +1,6 @@
 import json
 import os
+from urllib.parse import urlparse
 from typing import Any, Dict
 
 
@@ -99,10 +100,31 @@ class ConfigLoader:
         if "ollama" not in self.data:
             errors.append("Section 'ollama' manquante")
         else:
-            if "host" not in self.data["ollama"]:
+            host = self.data["ollama"].get("host")
+            model = self.data["ollama"].get("model")
+            timeout = self.data["ollama"].get("timeout")
+            if not host:
                 errors.append("Cle 'ollama.host' manquante")
-            if "model" not in self.data["ollama"]:
+            elif urlparse(host).scheme not in {"http", "https"}:
+                errors.append("Cle 'ollama.host' doit etre une URL http(s)")
+            if not model:
                 errors.append("Cle 'ollama.model' manquante")
+            if timeout is not None and (not isinstance(timeout, int) or timeout <= 0):
+                errors.append("Cle 'ollama.timeout' doit etre un entier positif")
+
+        max_history = self.get("system.max_history")
+        if max_history is not None and (not isinstance(max_history, int) or max_history <= 0):
+            errors.append("Cle 'system.max_history' doit etre un entier positif")
+
+        tiers = self._limits.get("tiers", {})
+        if not isinstance(tiers, dict) or not tiers:
+            errors.append("Section 'tiers' manquante dans config/limits.json")
+        for tier_name, tier_config in tiers.items():
+            for key in ("max_messages", "window_hours", "num_ctx", "num_predict"):
+                value = tier_config.get(key)
+                if not isinstance(value, int) or value <= 0:
+                    errors.append(f"Tier '{tier_name}': '{key}' doit etre un entier positif")
+
         if errors:
             raise ValueError("\n".join(errors))
         return True

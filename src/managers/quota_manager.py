@@ -6,6 +6,7 @@ from typing import Dict, Any
 class QuotaManager:
     def __init__(self, config: Any) -> None:
         self.quota_file: str = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'cache', '.quota')
+        os.makedirs(os.path.dirname(self.quota_file), exist_ok=True)
         self.config: Any = config
 
     def _get_tier_config(self) -> Dict[str, int]:
@@ -55,7 +56,7 @@ class QuotaManager:
             try:
                 with open(self.quota_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
-            except:
+            except (json.JSONDecodeError, IOError, KeyError, ValueError):
                 pass
         return {}
 

@@ -7,6 +7,7 @@ class HistoryManager:
     def __init__(self, config: Any) -> None:
         self.max_history: int = config.get("system.max_history", 20)
         self.history_dir: str = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'history')
+        os.makedirs(self.history_dir, exist_ok=True)
 
     def add(self, session_id: str, prompt: str, response: str) -> None:
         filepath: str = os.path.join(self.history_dir, f"{session_id}.json")
