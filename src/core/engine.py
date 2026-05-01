@@ -36,6 +36,7 @@ COMMANDS = {
     "key": "Activer une cle VIP/Unlimited",
     "tier": "Voir le tier actuel",
     "tokens": "Tokens restants",
+    "speed": "Vitesse derniere reponse",
     "help": "Aide",
 }
 
@@ -138,7 +139,8 @@ class IntelGPTEngine:
                     self.history.add(self.session_id, prompt, response)
                     self.quota.use(self.session_id)
                     remaining = self.quota.get_remaining(self.session_id)
-                    print_colored(f"[{elapsed:.1f}s] [messages:{remaining}] [mode:{self.current_mode}] [tier:{self.current_tier}]", Colors.GRAY)
+                    tokens_per_second = self.ollama.get_last_tokens_per_second()
+                    print_colored(f"[{elapsed:.1f}s] [{tokens_per_second:.1f} tok/s] [messages:{remaining}] [mode:{self.current_mode}] [tier:{self.current_tier}]", Colors.GRAY)
                 else:
                     print_colored(f"\n{response or '[ERREUR] Verifiez qu Ollama est lance.'}\n", Colors.RED)
 
@@ -206,6 +208,10 @@ class IntelGPTEngine:
             filled = min(filled, bar_len)
             bar = "|" + "#" * filled + "-" * (bar_len - filled) + "|"
             print_colored(f"Tokens : {bar} {used}/{max_tokens} utilises ({remaining} restants)", Colors.CYAN)
+        elif cmd == "speed":
+            tokens_per_second = self.ollama.get_last_tokens_per_second()
+            total_seconds = self.ollama.get_last_total_seconds()
+            print_colored(f"Vitesse derniere reponse : {tokens_per_second:.1f} tok/s, total Ollama {total_seconds:.1f}s", Colors.CYAN)
         elif cmd == "help":
             print_colored("\nCommandes :", Colors.CYAN)
             for command, description in COMMANDS.items():

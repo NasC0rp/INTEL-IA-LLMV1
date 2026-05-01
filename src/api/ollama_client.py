@@ -18,6 +18,8 @@ class OllamaClient:
         self._warmed: bool = False
         self._lock: threading.Lock = threading.Lock()
         self._last_eval_count: int = 0
+        self._last_eval_seconds: float = 0.0
+        self._last_total_seconds: float = 0.0
 
     def generate(self, prompt: str, mode: str = "default") -> str:
         if not self._warmed:
@@ -30,6 +32,8 @@ class OllamaClient:
             data: Dict[str, Any] = response.json()
             self.error_handler.reset()
             self._last_eval_count = data.get("eval_count", 0)
+            self._last_eval_seconds = data.get("eval_duration", 0) / 1_000_000_000
+            self._last_total_seconds = data.get("total_duration", 0) / 1_000_000_000
             return data.get("response", "").strip()
         except requests.exceptions.RequestException as e:
             return self.error_handler.handle(e, prompt)
@@ -78,3 +82,11 @@ class OllamaClient:
 
     def get_last_eval_count(self) -> int:
         return self._last_eval_count
+
+    def get_last_tokens_per_second(self) -> float:
+        if self._last_eval_seconds <= 0:
+            return 0.0
+        return self._last_eval_count / self._last_eval_seconds
+
+    def get_last_total_seconds(self) -> float:
+        return self._last_total_seconds

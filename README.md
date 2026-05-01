@@ -57,6 +57,7 @@ Intel CODE [free] > votre question
 | `key` | Active une cle VIP ou Unlimited |
 | `tier` | Affiche le tier actuel |
 | `tokens` | Affiche l'utilisation de tokens |
+| `speed` | Affiche la vitesse de la derniere reponse |
 | `clear` | Efface l'ecran |
 | `exit` | Quitte l'assistant |
 
