@@ -80,6 +80,18 @@ Intel CODE [free] > votre question
 | VIP | 50 | 12h | `INT3LK3Y_V1P-XXXX` |
 | Unlimited | 999 | 1h | `INT3LK3Y_ULT1M3-XXXX` |
 
+## Renouvellement quota et tokens
+
+Le quota de messages se renouvelle automatiquement selon la fenetre du tier actif:
+
+- Free: 30 messages toutes les 12 heures
+- VIP: 50 messages toutes les 12 heures
+- Unlimited: 999 messages toutes les 1 heure
+
+La fenetre commence au premier message compte dans le cycle courant. Exemple: si le quota Free commence a 14h00, les messages se renouvellent a 02h00.
+
+La limite de tokens n'est pas un quota qui se renouvelle. C'est une limite par reponse: si une reponse atteint la limite de tokens, elle s'arrete, mais l'utilisateur peut envoyer un autre message tant qu'il lui reste du quota messages.
+
 ## Configuration des cles
 
 Les cles sensibles ne doivent pas etre commitees.
@@ -94,28 +106,28 @@ Les cles sensibles ne doivent pas etre commitees.
 
 ```text
 INTEL-IA-LLMV1/
-├── main.py
-├── requirements.txt
-├── Modelfile
-├── README.md
-├── config/
-│   ├── config.json
-│   ├── limits.json
-│   ├── prompts.json
-│   ├── models.json
-│   ├── keys.json
-│   └── keys.example.json
-├── scripts/
-│   ├── setup.sh
-│   ├── start.sh
-│   ├── dev.sh
-│   └── update.sh
-└── src/
-    ├── api/
-    ├── checker/
-    ├── core/
-    ├── managers/
-    └── utils/
+|-- main.py
+|-- requirements.txt
+|-- Modelfile
+|-- README.md
+|-- config/
+|   |-- config.json
+|   |-- limits.json
+|   |-- prompts.json
+|   |-- models.json
+|   |-- keys.json
+|   `-- keys.example.json
+|-- scripts/
+|   |-- setup.sh
+|   |-- start.sh
+|   |-- dev.sh
+|   `-- update.sh
+`-- src/
+    |-- api/
+    |-- checker/
+    |-- core/
+    |-- managers/
+    `-- utils/
 ```
 
 ## Donnees locales
