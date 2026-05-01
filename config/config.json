@@ -2,7 +2,7 @@
     "ollama": {
         "host": "http://localhost:11434/api/generate",
         "model": "intel-code",
-        "timeout": 180,
+        "timeout": 300,
         "keep_alive": "15m"
     },
     "system": {

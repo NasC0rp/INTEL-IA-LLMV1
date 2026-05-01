@@ -20,8 +20,8 @@ class RequestBuilder:
 
     def build(self, prompt: str, model: str, mode: str = "default") -> Dict[str, Any]:
         tier = self.config.get_tier_config()
-        num_ctx = tier.get("num_ctx", 4096)
-        num_predict = tier.get("num_predict", 1024)
+        num_ctx = tier.get("num_ctx", 2048)
+        num_predict = tier.get("num_predict", 256)
         num_thread = tier.get("num_thread", 0)
         system_prompt = self.prompts.get(mode, self.prompts.get("default", ""))
 

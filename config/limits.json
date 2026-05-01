@@ -3,8 +3,8 @@
     "free": {
       "max_messages": 30,
       "window_hours": 12,
-      "num_ctx": 4096,
-      "num_predict": 1024,
+      "num_ctx": 2048,
+      "num_predict": 256,
       "num_thread": 0,
       "requires_key": false
     },
