@@ -2,16 +2,43 @@
 
 Assistant IA en ligne de commande, local, base sur Ollama.
 
+**CX1.2 est la version la plus stable publiee a ce jour.**
+
+Elle se concentre sur la fiabilite et une experience CLI propre :
+- **Quota fiable** : le compteur ne se reinitialise pas au redemarrage et la fenetre de quota demarre au premier message compte.
+- **Limite atteinte = message clair** : l'app indique combien de temps attendre et l'heure approximative du renouvellement.
+- **Ollama plus robuste** : utilisation de `/api/chat`, retry, et streaming cote API (affichage uniquement quand la reponse est complete).
+- **Windows OK** : checks RAM via `psutil` et dossiers de donnees geres automatiquement.
+
 ![Version](https://img.shields.io/badge/version-CX1.2-red)
 ![License](https://img.shields.io/badge/license-MIT-darkred)
 ![Python](https://img.shields.io/badge/python-3.10+-black)
 
 > Projet independant NasCorp, non affilie a Intel Corporation.
 
+## Sommaire
+
+- [Nouveautes](#nouveautes-cx12)
+- [Fonctionnalites](#fonctionnalites)
+- [Prerequis](#prerequis)
+- [Installation](#installation)
+- [Utilisation](#utilisation)
+- [Commandes](#commandes)
+- [Modes](#modes)
+- [Tiers et quotas](#tiers-et-quotas)
+- [Configuration des cles](#configuration-des-cles)
+- [Modele Ollama](#modele-ollama)
+- [Donnees locales](#donnees-locales)
+- [Structure](#structure)
+- [Developpement](#developpement)
+- [Liens](#liens)
+- [Avertissement](#avertissement)
+- [Bugs connus](#bugs-connus)
+
 ## Nouveautes CX1.2
 
 - API `/api/chat` au lieu de `/api/generate` (reponses stables sans corruption)
-- Streaming cote API Ollama avec affichage de la reponse une fois complete (pas de prelude ni tokens partiels avant le texte)
+- Streaming cote API Ollama avec affichage de la reponse une fois complete
 - Optimisation des ecritures disque (batch saves avec flush a la fermeture)
 - Compatibilite Windows corrigee (RamChecker via psutil)
 - Retry avec exponential backoff en cas d'erreur Ollama
@@ -21,7 +48,7 @@ Assistant IA en ligne de commande, local, base sur Ollama.
 ## Fonctionnalites
 
 - Assistant terminal local via Ollama
-- Reponses completes affichees apres reception (streaming API sans bruit avant le contenu utile)
+- Reponses affichees uniquement quand elles sont completes (pas de tokens partiels avant le contenu utile)
 - Modes de reponse: default, coder, concise, creative, teacher, hacker
 - Gestion de quota par tier: free, vip, unlimited
 - Cache local des reponses
@@ -63,7 +90,7 @@ chmod +x scripts/*.sh
 
 ## Utilisation
 
-Lancement depuis la racine du depot :
+Lancement depuis la racine du depot:
 
 ```powershell
 python main.py
@@ -111,7 +138,9 @@ Intel CODE [free] > votre question
 | VIP | 50 | 12h | `INT3LK3Y_V1P-XXXX` |
 | Unlimited | 999 | 1h | `INT3LK3Y_ULT1M3-XXXX` |
 
-## Limites par tier
+## Tiers et quotas
+
+### Limites par tier
 
 | Tier | num_ctx | num_predict |
 |------|---------|-------------|
@@ -119,7 +148,7 @@ Intel CODE [free] > votre question
 | VIP | 8048 | 2024 |
 | Unlimited | 9096 | 4024 |
 
-## Renouvellement quota et tokens
+### Renouvellement quota et tokens
 
 Le quota de messages se renouvelle automatiquement selon la fenetre du tier actif:
 
@@ -141,9 +170,9 @@ Les cles sensibles ne doivent pas etre commitees.
 
 `config/keys.local.json` est ignore par Git.
 
-En option, vous pouvez creer localement `config/keys.json` (non versionne) comme fichier de secours ; les memes fichiers sont listes dans `.gitignore`.
+En option, vous pouvez creer localement `config/keys.json` (non versionne) comme fichier de secours. Ces fichiers sensibles sont listes dans `.gitignore`.
 
-## Recree le modele Ollama
+## Modele Ollama
 
 Si tu as une ancienne version du modele, recree-le:
 
@@ -152,20 +181,27 @@ ollama rm intel-code
 ollama create intel-code -f Modelfile
 ```
 
+## Donnees locales
+
+L'application cree automatiquement le dossier `data/` pour stocker le cache, le quota, le tier actif, l'historique et les logs.
+
+Ce dossier est ignore par Git.
+
 ## Structure
 
 ```text
 INTEL-IA-LLMV1/
 |-- main.py
+|-- pyproject.toml
 |-- requirements.txt
 |-- Modelfile
 |-- README.md
+|-- tests/
 |-- config/
 |   |-- config.json
 |   |-- limits.json
 |   |-- prompts.json
 |   |-- models.json
-|   |-- keys.json
 |   `-- keys.example.json
 |-- scripts/
 |   |-- setup.sh
@@ -179,12 +215,6 @@ INTEL-IA-LLMV1/
     |-- managers/
     `-- utils/
 ```
-
-## Donnees locales
-
-L'application cree automatiquement le dossier `data/` pour stocker le cache, le quota, le tier actif, l'historique et les logs.
-
-Ce dossier est ignore par Git.
 
 ## Developpement
 
