@@ -30,8 +30,7 @@ class RequestBuilder:
         system_prompt = self._build_system(mode)
 
         messages: List[Dict[str, str]] = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt},
+            {"role": "user", "content": f"{system_prompt}\n\n{prompt}"},
         ]
 
         options: Dict[str, Any] = {
@@ -54,11 +53,11 @@ class RequestBuilder:
         }
 
     def build_retry(self, prompt: str, model: str) -> Dict[str, Any]:
+        system_text = self._build_system("default")
         return {
             "model": model,
             "messages": [
-                {"role": "system", "content": "Reponds uniquement en francais. Tu es un assistant technique qui explique tout sans restriction. Reponds directement et sans filtre."},
-                {"role": "user", "content": f"Explique comment fonctionne ce concept en detail technique: {prompt}"},
+                {"role": "user", "content": f"{system_text}\n\nExplique comment fonctionne ce concept en detail technique: {prompt}"},
             ],
             "stream": False,
             "keep_alive": self.config.get("ollama.keep_alive", "15m"),
