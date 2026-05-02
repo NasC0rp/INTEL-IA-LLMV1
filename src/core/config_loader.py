@@ -96,6 +96,40 @@ class ConfigLoader:
         tier: str = self.get_tier()
         return self._limits.get("tiers", {}).get(tier, {})
 
+    def get_model_id(self) -> str:
+        # Priorite: state -> models.json default -> config.json ollama.model
+        state_model = self._state.get("current_model")
+        if isinstance(state_model, str) and state_model:
+            return state_model
+        default_model = self._models.get("default_model")
+        if isinstance(default_model, str) and default_model:
+            return default_model
+        return self.get("ollama.model", "intel-code")
+
+    def set_model_id(self, model_id: str) -> None:
+        catalog = self._models.get("models", {})
+        if isinstance(catalog, dict) and model_id in catalog:
+            self._state["current_model"] = model_id
+            self._save_state()
+            return
+        # Autoriser aussi un nom de modele Ollama brut (ex: "llama3.1:8b")
+        if isinstance(model_id, str) and model_id.strip():
+            self._state["current_model"] = model_id.strip()
+            self._save_state()
+            return
+        raise ValueError("Modele invalide")
+
+    def get_model_catalog(self) -> Dict[str, Any]:
+        return self._models.get("models", {}) if isinstance(self._models.get("models"), dict) else {}
+
+    def get_model_source(self, model_id: str) -> str:
+        catalog = self.get_model_catalog()
+        if model_id in catalog and isinstance(catalog[model_id], dict):
+            src = catalog[model_id].get("source")
+            if isinstance(src, str) and src:
+                return src
+        return model_id
+
     def get_prompt(self, mode: str = "default") -> str:
         return self._prompts.get(mode, self._prompts.get("default", ""))
 

@@ -56,6 +56,7 @@ Elle se concentre sur la fiabilite et une experience CLI propre :
 - Historique par session
 - Verification systeme au demarrage
 - Detection de mise a jour GitHub
+- 3 profils de modele: `intel-code`, `intel-reflextion`, `intel-flash` (commande `models`)
 
 ## Prerequis
 
@@ -136,8 +137,8 @@ Intel CODE [free] > votre question
 | Tier | Messages | Fenetre | Cle |
 |------|----------|---------|-----|
 | Free | 30 | 12h | Aucune |
-| VIP | 50 | 12h | `INT3LK3Y_V1P-XXXX` |
-| Unlimited | 999 | 1h | `INT3LK3Y_ULT1M3-XXXX` |
+| VIP | 50 | 12h | `INT3LK1Y_V1P-XXXX` |
+| Unlimited | 999 | 1h | `INT3LK1Y_ULT3M1-XXXX` |
 
 ## Tiers et quotas
 

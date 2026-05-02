@@ -17,7 +17,7 @@
       "num_predict": 2024,
       "num_thread": 0,
       "requires_key": true,
-      "key_prefix": "INT3LK3Y_V1P"
+      "key_prefix": "INT3LK1Y_V1P"
     },
     "unlimited": {
       "max_messages": 999,
@@ -27,7 +27,7 @@
       "num_predict": 4024,
       "num_thread": 0,
       "requires_key": true,
-      "key_prefix": "INT3LK3Y_ULT1M3"
+      "key_prefix": "INT3LK1Y_ULT3M1"
     }
   },
   "current_tier": "free"

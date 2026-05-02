@@ -6,7 +6,26 @@
             "parameters": "4B",
             "min_ram_gb": 6,
             "censored": false,
-            "languages": ["fr", "en"]
+            "languages": ["fr", "en"],
+            "token_profile": "high"
+        },
+        "intel-reflextion": {
+            "name": "Intel Reflextion",
+            "source": "intel-reflextion",
+            "parameters": "Auto",
+            "min_ram_gb": 6,
+            "censored": false,
+            "languages": ["fr", "en"],
+            "token_profile": "medium"
+        },
+        "intel-flash": {
+            "name": "Intel Flash",
+            "source": "intel-flash",
+            "parameters": "Auto",
+            "min_ram_gb": 4,
+            "censored": false,
+            "languages": ["fr", "en"],
+            "token_profile": "adaptive"
         }
     },
     "default_model": "intel-code"

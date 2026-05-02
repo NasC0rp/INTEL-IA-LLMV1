@@ -3,7 +3,7 @@ import requests
 
 class NetworkChecker:
     def __init__(self, config):
-        self.model = config.get("ollama.model", "intel-code")
+        self.model = config.get_model_source(config.get_model_id()) if hasattr(config, "get_model_id") else config.get("ollama.model", "intel-code")
         self.base_url = config.get("ollama.host", "http://localhost:11434/api/generate").removesuffix("/api/generate").rstrip("/")
 
     def check(self):

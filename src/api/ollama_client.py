@@ -17,7 +17,8 @@ class OllamaClient:
     def __init__(self, config: ConfigLoader, logger: Optional[Logger] = None) -> None:
         self.base_url: str = config.get("ollama.host", "http://localhost:11434/api/generate").removesuffix("/api/generate").rstrip("/")
         self.chat_url: str = f"{self.base_url}/api/chat"
-        self.model: str = config.get("ollama.model", "intel-code")
+        self._config: ConfigLoader = config
+        self.model: str = config.get_model_source(config.get_model_id())
         self.timeout: int = config.get("ollama.timeout", 180)
         self.logger: Optional[Logger] = logger
         self.builder: RequestBuilder = RequestBuilder(config)
@@ -33,6 +34,12 @@ class OllamaClient:
             os.path.dirname(__file__), "..", "..", "data", "cache", "token_stats.json"
         )
         self._load_persistent_stats()
+
+    def set_model(self, model_id: str) -> None:
+        self._config.set_model_id(model_id)
+        self.model = self._config.get_model_source(self._config.get_model_id())
+        # reset warmup so next request is fast & consistent
+        self._warmed = False
 
     def _load_persistent_stats(self) -> None:
         if not os.path.exists(self._stats_file):

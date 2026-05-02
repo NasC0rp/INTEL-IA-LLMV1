@@ -31,7 +31,7 @@ COMMANDS = {
     "cache": "Taille du cache",
     "history": "Historique",
     "mode": "Changer de mode",
-    "models": "Modeles disponibles",
+    "models": "Lister / changer de modele",
     "key": "Activer une cle VIP/Unlimited",
     "tier": "Voir le tier actuel",
     "tokens": "Quota tokens periode + derniere generation (num_predict)",
@@ -84,6 +84,7 @@ class IntelGPTEngine:
         print_colored("               Intel CODE CX1.2 | NasCorp 2026", Colors.YELLOW)
         tier_color: str = Colors.GREEN if self.current_tier == "free" else Colors.MAGENTA if self.current_tier == "vip" else Colors.CYAN
         print_colored(f"               Tier: {self.current_tier.upper()}", tier_color)
+        print_colored(f"               Modele: {self.ollama.model}", Colors.GRAY)
         remaining: int = self.quota.get_remaining(self.session_id)
         print_colored(f"               Messages: {remaining}", Colors.GRAY)
         cap_tok: int | None = self.quota.get_max_tokens_window(self.session_id)
@@ -189,7 +190,7 @@ class IntelGPTEngine:
 
     def _activate_key(self) -> None:
         print_colored("\n=== ACTIVATION CLE ===", Colors.CYAN)
-        print_colored("Formats: INT3LK3Y_V1P-XXXX ou INT3LK3Y_ULT1M3-XXXX", Colors.GRAY)
+        print_colored("Formats: INT3LK1Y_V1P-XXXX ou INT3LK1Y_ULT3M1-XXXX", Colors.GRAY)
         key: str = input(f"{Colors.YELLOW}Cle > {Colors.NC}").strip()
         if not key:
             return
@@ -250,14 +251,38 @@ class IntelGPTEngine:
             self.current_mode = modes[(idx + 1) % len(modes)]
             print_colored(f"Mode : {self.current_mode}", Colors.GREEN)
         elif cmd == "models":
+            catalog = self.config.get_model_catalog()
+            print_colored("\nProfils Intel :", Colors.CYAN)
+            if catalog:
+                for i, (mid, info) in enumerate(catalog.items(), 1):
+                    name = info.get("name", mid) if isinstance(info, dict) else mid
+                    token_profile = info.get("token_profile", "") if isinstance(info, dict) else ""
+                    src = self.config.get_model_source(mid)
+                    marker = " (actif)" if src == self.ollama.model else ""
+                    extra = f" [{token_profile}]" if token_profile else ""
+                    print_colored(f"  {i}. {mid} -> {name}{extra} (ollama: {src}){marker}", Colors.GRAY)
+            else:
+                print_colored("  (aucun profil dans config/models.json)", Colors.GRAY)
+
             models = self.ollama.get_available_models()
-            if not models:
-                print_colored("Aucun modele trouve. Verifiez qu'Ollama est lance.", Colors.YELLOW)
+            if models:
+                print_colored("\nModeles Ollama detectes :", Colors.CYAN)
+                for index, model in enumerate(models, 1):
+                    marker = " (actif)" if model == self.ollama.model or model == f"{self.ollama.model}:latest" else ""
+                    print_colored(f"  - {model}{marker}", Colors.GRAY)
+            else:
+                print_colored("\nAucun modele Ollama detecte (verifiez qu'Ollama est lance).", Colors.YELLOW)
+
+            choice = input(
+                f"{Colors.YELLOW}Changer de modele (id, ex: intel-flash) ou Entree pour annuler > {Colors.NC}"
+            ).strip()
+            if not choice:
                 return
-            print_colored("Modeles disponibles :", Colors.CYAN)
-            for index, model in enumerate(models, 1):
-                marker = " (actif)" if model == self.ollama.model or model == f"{self.ollama.model}:latest" else ""
-                print_colored(f"  {index}. {model}{marker}", Colors.GRAY)
+            try:
+                self.ollama.set_model(choice)
+                print_colored(f"Modele actif: {self.ollama.model}", Colors.GREEN)
+            except Exception as e:
+                print_colored(f"Modele invalide: {e}", Colors.RED)
         elif cmd == "key":
             self._activate_key()
         elif cmd == "tier":
@@ -312,8 +337,8 @@ class IntelGPTEngine:
                 print_colored(f"  {command:10} -> {description}", Colors.GRAY)
             print_colored("\nTiers disponibles :", Colors.CYAN)
             print_colored("  FREE      -> 30 msg/12h (gratuit)", Colors.GREEN)
-            print_colored("  VIP       -> 50 msg/12h (cle INT3LK3Y_V1P-XXXX)", Colors.MAGENTA)
-            print_colored("  UNLIMITED -> 999 msg/h  (cle INT3LK3Y_ULT1M3-XXXX)", Colors.CYAN)
+            print_colored("  VIP       -> 50 msg/12h (cle INT3LK1Y_V1P-XXXX)", Colors.MAGENTA)
+            print_colored("  UNLIMITED -> 999 msg/h  (cle INT3LK1Y_ULT3M1-XXXX)", Colors.CYAN)
             print()
 
     def _shutdown(self) -> None:
