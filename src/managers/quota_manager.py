@@ -100,7 +100,7 @@ class QuotaManager:
     def get_max_tokens_window(self, session_id: str) -> Optional[int]:
         return self._get_tier_config()["max_tokens_window"]
 
-    def get_wait_until_renewal(self, session_id: str) -> Optional[Tuple[datetime, float, BlockReason]]:
+    def get_wait_until_renewal(self, session_id: str) -> Optional[Tuple[datetime, float, str]]:
         """
         Si blocage dans la fenetre (messages OU tokens selon tier), renvoie la fin de fenetre,
         les secondes restantes, et la raison: 'messages', 'tokens', ou 'both'.
