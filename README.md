@@ -205,13 +205,6 @@ python -m compileall main.py src
 Intel CODE execute un modele local via Ollama. L'utilisateur reste responsable de son usage, des prompts envoyes et des reponses generees.
 
 ## Bugs connus
-
-- **Modele 4B instable** : Le modele `huihui_ai/qwen3-abliterated:4b` est leger et peut produire des reponses vides ou incoherentes sur des sujets sensibles (reverse shell, etc.). C'est un comportement du modele, pas de l'app.
 - **Vitesse de generation lente** : Sur les machines a 3 coeurs / 6 Go RAM, la vitesse peut tomber a 1-2 tok/s, ce qui rend les reponses longues (~150-300s pour 256 tokens).
 - **Prompts sensibles** : Certains sujets declenchent des refus silencieux du modele (reponse vide). Le retry automatique reformule le prompt, mais sans garantie.
 
-Pour ameliorer la qualite, utilise un modele plus robuste :
-```powershell
-ollama pull dolphin3-mistral:7b
-```
-Puis change `"model": "intel-code"` vers `"model": "dolphin3-mistral:7b"` dans `config/config.json`.
