@@ -13,6 +13,7 @@ data/
 config/keys.local.json
 config/keys.json
 config/key.json
+config/license_private_key.pem
 
 .pytest_cache/
 .mypy_cache/

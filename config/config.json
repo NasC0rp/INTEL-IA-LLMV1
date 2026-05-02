@@ -14,5 +14,8 @@
     "github": {
         "repo": "NasC0rp/INTEL-IA-LLMV1",
         "branch": "main"
+    },
+    "license": {
+        "public_key_path": "config/license_public_key.pem"
     }
 }

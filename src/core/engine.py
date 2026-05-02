@@ -53,7 +53,8 @@ class IntelGPTEngine:
         self.memory: MemoryManager = MemoryManager(config)
         self.checker: SystemChecker = SystemChecker(config)
         self.updater: Updater = Updater(config)
-        self.key_manager: KeyManager = KeyManager()
+        pub_path = self.config.get("license.public_key_path", "config/license_public_key.pem")
+        self.key_manager: KeyManager = KeyManager(public_key_path=pub_path)
         self.formatter: Formatter = Formatter()
         self.running: bool = False
         self.current_mode: str = "default"

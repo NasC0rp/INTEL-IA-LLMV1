@@ -1,3 +1,4 @@
-# Aligné sur pyproject.toml — versions bornées pour des installs reproductibles
+# Aligne sur pyproject.toml — versions bornées pour des installs reproductibles
 requests>=2.31.0,<3
 psutil>=5.9.0,<7
+cryptography>=42,<46

@@ -177,6 +177,20 @@ Les cles sensibles ne doivent pas etre commitees.
 
 En option, vous pouvez creer localement `config/keys.json` (non versionne) comme fichier de secours. Ces fichiers sensibles sont listes dans `.gitignore`.
 
+### Mode secure (recommande) : licences signees
+
+Pour eviter qu'on puisse forger des cles localement, Intel CODE peut verifier une **licence signee**:
+- L'app embarque une **cle publique**: `config/license_public_key.pem`
+- Les licences sont generees **cote admin** avec une **cle privee** (a garder hors du depot)
+
+Format d'une licence:
+`LIC.<payload_base64url>.<signature_base64url>`
+
+Activation:
+- Remplace `config/license_public_key.pem` par ta vraie cle publique Ed25519
+- Genere une licence via `scripts/generate_license_key.py`
+- Dans l'app, commande `key` puis colle la cle `LIC....`
+
 ## Modele Ollama
 
 Si tu as une ancienne version du modele, recree-le:

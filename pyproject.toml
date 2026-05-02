@@ -12,6 +12,7 @@ license = { text = "MIT" }
 dependencies = [
     "requests>=2.31.0,<3",
     "psutil>=5.9.0,<7",
+    "cryptography>=42,<46",
 ]
 
 [project.optional-dependencies]
