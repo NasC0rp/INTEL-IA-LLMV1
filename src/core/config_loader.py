@@ -122,6 +122,17 @@ class ConfigLoader:
     def get_model_catalog(self) -> Dict[str, Any]:
         return self._models.get("models", {}) if isinstance(self._models.get("models"), dict) else {}
 
+    def get_model_profile(self, model_id: str | None = None) -> Dict[str, Any]:
+        mid = model_id or self.get_model_id()
+        catalog = self.get_model_catalog()
+        info = catalog.get(mid, {})
+        return info if isinstance(info, dict) else {}
+
+    def get_model_options(self, model_id: str | None = None) -> Dict[str, Any]:
+        info = self.get_model_profile(model_id)
+        opts = info.get("options", {})
+        return opts if isinstance(opts, dict) else {}
+
     def get_model_source(self, model_id: str) -> str:
         catalog = self.get_model_catalog()
         if model_id in catalog and isinstance(catalog[model_id], dict):

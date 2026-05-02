@@ -84,7 +84,8 @@ class IntelGPTEngine:
         print_colored("               Intel CODE CX1.2 | NasCorp 2026", Colors.YELLOW)
         tier_color: str = Colors.GREEN if self.current_tier == "free" else Colors.MAGENTA if self.current_tier == "vip" else Colors.CYAN
         print_colored(f"               Tier: {self.current_tier.upper()}", tier_color)
-        print_colored(f"               Modele: {self.ollama.model}", Colors.GRAY)
+        model_id = self.config.get_model_id()
+        print_colored(f"               Profil: {model_id} (base: {self.ollama.model})", Colors.GRAY)
         remaining: int = self.quota.get_remaining(self.session_id)
         print_colored(f"               Messages: {remaining}", Colors.GRAY)
         cap_tok: int | None = self.quota.get_max_tokens_window(self.session_id)
@@ -257,21 +258,14 @@ class IntelGPTEngine:
                 for i, (mid, info) in enumerate(catalog.items(), 1):
                     name = info.get("name", mid) if isinstance(info, dict) else mid
                     token_profile = info.get("token_profile", "") if isinstance(info, dict) else ""
+                    hint = info.get("prompt_hint", "") if isinstance(info, dict) else ""
                     src = self.config.get_model_source(mid)
-                    marker = " (actif)" if src == self.ollama.model else ""
+                    marker = " (actif)" if mid == self.config.get_model_id() else ""
                     extra = f" [{token_profile}]" if token_profile else ""
-                    print_colored(f"  {i}. {mid} -> {name}{extra} (ollama: {src}){marker}", Colors.GRAY)
+                    hint_txt = f" - {hint}" if hint else ""
+                    print_colored(f"  {i}. {mid} -> {name}{extra} (base: {src}){marker}{hint_txt}", Colors.GRAY)
             else:
                 print_colored("  (aucun profil dans config/models.json)", Colors.GRAY)
-
-            models = self.ollama.get_available_models()
-            if models:
-                print_colored("\nModeles Ollama detectes :", Colors.CYAN)
-                for index, model in enumerate(models, 1):
-                    marker = " (actif)" if model == self.ollama.model or model == f"{self.ollama.model}:latest" else ""
-                    print_colored(f"  - {model}{marker}", Colors.GRAY)
-            else:
-                print_colored("\nAucun modele Ollama detecte (verifiez qu'Ollama est lance).", Colors.YELLOW)
 
             choice = input(
                 f"{Colors.YELLOW}Changer de modele (id, ex: intel-flash) ou Entree pour annuler > {Colors.NC}"
@@ -280,7 +274,10 @@ class IntelGPTEngine:
                 return
             try:
                 self.ollama.set_model(choice)
-                print_colored(f"Modele actif: {self.ollama.model}", Colors.GREEN)
+                print_colored(
+                    f"Profil actif: {self.config.get_model_id()} (base Ollama: {self.ollama.model})",
+                    Colors.GREEN,
+                )
             except Exception as e:
                 print_colored(f"Modele invalide: {e}", Colors.RED)
         elif cmd == "key":

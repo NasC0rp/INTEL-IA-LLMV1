@@ -32,9 +32,17 @@ class RequestBuilder:
     def build(self, prompt: str, model: str, mode: str = "default") -> Dict[str, Any]:
         tier = self.config.get_tier_config()
         num_ctx = tier.get("num_ctx", 2048)
-        num_predict = tier.get("num_predict", 256)
+        num_predict_base = tier.get("num_predict", 256)
         num_thread = tier.get("num_thread", 0)
         system_prompt = self._build_system(mode)
+
+        model_opts = self.config.get_model_options()
+        scale = model_opts.get("num_predict_scale", 1.0)
+        try:
+            scale_f = float(scale)
+        except Exception:
+            scale_f = 1.0
+        num_predict = int(max(1, round(int(num_predict_base) * max(0.1, min(2.0, scale_f)))))
 
         messages: List[Dict[str, str]] = [
             {"role": "user", "content": f"{system_prompt}\n\n{prompt}"},
@@ -42,10 +50,10 @@ class RequestBuilder:
 
         options: Dict[str, Any] = {
             "num_ctx": num_ctx,
-            "temperature": 0.5,
-            "top_p": 0.85,
-            "repeat_penalty": 1.15,
-            "top_k": 40,
+            "temperature": model_opts.get("temperature", 0.5),
+            "top_p": model_opts.get("top_p", 0.85),
+            "repeat_penalty": model_opts.get("repeat_penalty", 1.15),
+            "top_k": model_opts.get("top_k", 40),
             "num_predict": num_predict,
         }
         if num_thread and num_thread > 0:

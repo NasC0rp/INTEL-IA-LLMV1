@@ -7,25 +7,49 @@
             "min_ram_gb": 6,
             "censored": false,
             "languages": ["fr", "en"],
-            "token_profile": "high"
+            "token_profile": "high",
+            "prompt_hint": "Mode standard (consomme plus de tokens).",
+            "options": {
+                "temperature": 0.45,
+                "top_p": 0.85,
+                "repeat_penalty": 1.2,
+                "top_k": 40,
+                "num_predict_scale": 1.0
+            }
         },
         "intel-reflextion": {
             "name": "Intel Reflextion",
-            "source": "intel-reflextion",
-            "parameters": "Auto",
+            "source": "huihui_ai/qwen3-abliterated:4b",
+            "parameters": "4B",
             "min_ram_gb": 6,
             "censored": false,
             "languages": ["fr", "en"],
-            "token_profile": "medium"
+            "token_profile": "medium",
+            "prompt_hint": "Taches complexes, planification, recherches (consommation moyenne).",
+            "options": {
+                "temperature": 0.35,
+                "top_p": 0.9,
+                "repeat_penalty": 1.15,
+                "top_k": 40,
+                "num_predict_scale": 0.7
+            }
         },
         "intel-flash": {
             "name": "Intel Flash",
-            "source": "intel-flash",
-            "parameters": "Auto",
+            "source": "huihui_ai/qwen3-abliterated:4b",
+            "parameters": "4B",
             "min_ram_gb": 4,
             "censored": false,
             "languages": ["fr", "en"],
-            "token_profile": "adaptive"
+            "token_profile": "adaptive",
+            "prompt_hint": "Rapide et polyvalent (s'adapte, reponses plus courtes par defaut).",
+            "options": {
+                "temperature": 0.4,
+                "top_p": 0.9,
+                "repeat_penalty": 1.1,
+                "top_k": 40,
+                "num_predict_scale": 0.45
+            }
         }
     },
     "default_model": "intel-code"

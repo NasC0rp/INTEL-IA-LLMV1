@@ -40,6 +40,8 @@ class OllamaClient:
         self.model = self._config.get_model_source(self._config.get_model_id())
         # reset warmup so next request is fast & consistent
         self._warmed = False
+        # reset stats cache if switching profile/model
+        self._load_persistent_stats()
 
     def _load_persistent_stats(self) -> None:
         if not os.path.exists(self._stats_file):
