@@ -5,16 +5,19 @@ from typing import Any, Callable, Dict, Optional
 
 import requests
 
+from src.api.error_handler import ErrorHandler
+from src.api.request_builder import RequestBuilder
+from src.core.config_loader import ConfigLoader
+from src.managers.logger import Logger
+
 
 class OllamaClient:
-    def __init__(self, config: Any, logger: Any = None) -> None:
+    def __init__(self, config: ConfigLoader, logger: Optional[Logger] = None) -> None:
         self.base_url: str = config.get("ollama.host", "http://localhost:11434/api/generate").removesuffix("/api/generate").rstrip("/")
         self.chat_url: str = f"{self.base_url}/api/chat"
         self.model: str = config.get("ollama.model", "intel-code")
         self.timeout: int = config.get("ollama.timeout", 180)
-        self.logger: Any = logger
-        from src.api.error_handler import ErrorHandler
-        from src.api.request_builder import RequestBuilder
+        self.logger: Optional[Logger] = logger
         self.builder: RequestBuilder = RequestBuilder(config)
         self.error_handler: ErrorHandler = ErrorHandler()
         self._warmed: bool = False

@@ -1,11 +1,18 @@
+from __future__ import annotations
+
 import json
+import logging
 import os
 from typing import Any, Dict, List
 
+from src.core.config_loader import ConfigLoader
+
+_log = logging.getLogger(__name__)
+
 
 class RequestBuilder:
-    def __init__(self, config: Any) -> None:
-        self.config: Any = config
+    def __init__(self, config: ConfigLoader) -> None:
+        self.config: ConfigLoader = config
         self.prompts: Dict[str, str] = {}
         self._load_prompts()
 
@@ -15,8 +22,8 @@ class RequestBuilder:
             try:
                 with open(prompts_file, 'r', encoding='utf-8') as f:
                     self.prompts = json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                _log.warning("Impossible de lire prompts.json: %s", e)
 
     def _build_system(self, mode: str) -> str:
         base = self.prompts.get(mode, self.prompts.get("default", ""))

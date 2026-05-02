@@ -63,6 +63,14 @@ chmod +x scripts/*.sh
 
 ## Utilisation
 
+Lancement depuis la racine du depot :
+
+```powershell
+python main.py
+```
+
+Alternative : `python -m src`.
+
 ```text
 Intel CODE [free] > votre question
 ```
@@ -133,6 +141,8 @@ Les cles sensibles ne doivent pas etre commitees.
 
 `config/keys.local.json` est ignore par Git.
 
+En option, vous pouvez creer localement `config/keys.json` (non versionne) comme fichier de secours ; les memes fichiers sont listes dans `.gitignore`.
+
 ## Recree le modele Ollama
 
 Si tu as une ancienne version du modele, recree-le:
@@ -179,6 +189,8 @@ Ce dossier est ignore par Git.
 ## Developpement
 
 ```bash
+pip install -e ".[dev]"
+python -m pytest tests/ -q
 python -m compileall main.py src
 ./scripts/dev.sh
 ```

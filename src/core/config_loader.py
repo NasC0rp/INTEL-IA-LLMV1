@@ -1,7 +1,10 @@
 import json
+import logging
 import os
 from urllib.parse import urlparse
 from typing import Any, Dict
+
+_log = logging.getLogger(__name__)
 
 
 class ConfigLoader:
@@ -35,8 +38,8 @@ class ConfigLoader:
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     self._limits = json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                _log.warning("Impossible de lire %s: %s", path, e)
 
     def _load_models(self) -> None:
         path: str = os.path.join(self.config_dir, "models.json")
@@ -44,8 +47,8 @@ class ConfigLoader:
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     self._models = json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                _log.warning("Impossible de lire %s: %s", path, e)
 
     def _load_prompts(self) -> None:
         path: str = os.path.join(self.config_dir, "prompts.json")
@@ -53,15 +56,16 @@ class ConfigLoader:
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     self._prompts = json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                _log.warning("Impossible de lire %s: %s", path, e)
 
     def _load_state(self) -> None:
         if os.path.exists(self.state_path):
             try:
                 with open(self.state_path, "r", encoding="utf-8") as f:
                     self._state = json.load(f)
-            except (json.JSONDecodeError, IOError):
+            except (json.JSONDecodeError, IOError) as e:
+                _log.warning("Impossible de lire %s: %s", self.state_path, e)
                 self._state = {}
 
     def _save_state(self) -> None:

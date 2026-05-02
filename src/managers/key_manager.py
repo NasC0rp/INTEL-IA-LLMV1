@@ -1,6 +1,9 @@
 import json
+import logging
 import os
 from typing import Dict, List, Optional
+
+_log = logging.getLogger(__name__)
 
 
 class KeyManager:
@@ -49,6 +52,9 @@ class KeyManager:
         return {t: list(keys) for t, keys in self.valid_keys.items()}
 
     def _save(self) -> None:
-        os.makedirs(os.path.dirname(self.keys_file), exist_ok=True)
-        with open(self.keys_file, 'w', encoding='utf-8') as f:
-            json.dump({t: list(keys) for t, keys in self.valid_keys.items()}, f, indent=2)
+        try:
+            os.makedirs(os.path.dirname(self.keys_file), exist_ok=True)
+            with open(self.keys_file, "w", encoding="utf-8") as f:
+                json.dump({t: list(keys) for t, keys in self.valid_keys.items()}, f, indent=2)
+        except OSError as e:
+            _log.warning("Impossible d'enregistrer les cles: %s", e)

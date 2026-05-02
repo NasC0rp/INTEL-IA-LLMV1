@@ -2,9 +2,8 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any
-
 from src.api.ollama_client import OllamaClient
+from src.core.config_loader import ConfigLoader
 from src.checker.system_checker import SystemChecker
 from src.core.updater import Updater
 from src.managers.cache_manager import CacheManager
@@ -14,6 +13,7 @@ from src.managers.memory_manager import MemoryManager
 from src.managers.quota_manager import QuotaManager
 from src.managers.session_manager import SessionManager
 from src.utils.colors import Colors, clear_screen, print_colored
+from src.managers.logger import Logger
 from src.utils.formatter import Formatter
 
 BANNER = """
@@ -42,10 +42,10 @@ COMMANDS = {
 
 
 class IntelGPTEngine:
-    def __init__(self, config: Any, logger: Any) -> None:
+    def __init__(self, config: ConfigLoader, logger: Logger) -> None:
         self._ensure_directories()
-        self.config: Any = config
-        self.logger: Any = logger
+        self.config: ConfigLoader = config
+        self.logger: Logger = logger
         self.ollama: OllamaClient = OllamaClient(config, logger)
         self.quota: QuotaManager = QuotaManager(config)
         self.cache: CacheManager = CacheManager(config)
@@ -81,7 +81,7 @@ class IntelGPTEngine:
 
     def _show_banner(self) -> None:
         print_colored(BANNER, Colors.RED)
-        print_colored("               Intel CODE CX1 | NasCorp 2026", Colors.YELLOW)
+        print_colored("               Intel CODE CX1.2 | NasCorp 2026", Colors.YELLOW)
         tier_color: str = Colors.GREEN if self.current_tier == "free" else Colors.MAGENTA if self.current_tier == "vip" else Colors.CYAN
         print_colored(f"               Tier: {self.current_tier.upper()}", tier_color)
         remaining: int = self.quota.get_remaining(self.session_id)
@@ -135,12 +135,13 @@ class IntelGPTEngine:
                 print_colored("\nReflexion...", Colors.GRAY)
                 start_time: float = time.time()
                 token_buf: list[str] = []
-                token_count: int = [0]
+                token_count: int = 0
 
                 def _on_token(token: str) -> None:
+                    nonlocal token_count
                     token_buf.append(token)
-                    token_count[0] += 1
-                    if token_count[0] % 4 == 0:
+                    token_count += 1
+                    if token_count % 4 == 0:
                         sys.stdout.write(Colors.GRAY + token + Colors.NC)
                         sys.stdout.flush()
 
