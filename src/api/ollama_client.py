@@ -1,6 +1,8 @@
 import json
+import os
 import time
 import threading
+from datetime import datetime
 from typing import Any, Callable, Dict, Optional
 
 import requests
@@ -27,6 +29,45 @@ class OllamaClient:
         self._last_total_seconds: float = 0.0
         self._last_attempts: int = 0
         self._last_error: str = ""
+        self._stats_file: str = os.path.join(
+            os.path.dirname(__file__), "..", "..", "data", "cache", "token_stats.json"
+        )
+        self._load_persistent_stats()
+
+    def _load_persistent_stats(self) -> None:
+        if not os.path.exists(self._stats_file):
+            return
+        try:
+            with open(self._stats_file, "r", encoding="utf-8") as f:
+                raw: Dict[str, Any] = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return
+        if raw.get("model") != self.model:
+            return
+        self._last_eval_count = int(raw.get("eval_count") or 0)
+        self._last_eval_seconds = float(raw.get("eval_seconds") or 0)
+        self._last_total_seconds = float(raw.get("total_duration_seconds") or 0)
+
+    def _persist_persistent_stats(self) -> None:
+        try:
+            os.makedirs(os.path.dirname(self._stats_file), exist_ok=True)
+            payload: Dict[str, Any] = {
+                "model": self.model,
+                "eval_count": self._last_eval_count,
+                "eval_seconds": self._last_eval_seconds,
+                "total_duration_seconds": self._last_total_seconds,
+                "saved_at": datetime.now().isoformat(timespec="seconds"),
+            }
+            with open(self._stats_file, "w", encoding="utf-8") as f:
+                json.dump(payload, f, indent=2)
+        except OSError:
+            pass
+
+    def _apply_usage_from_ollama(self, chunk: Dict[str, Any]) -> None:
+        self._last_eval_count = int(chunk.get("eval_count") or 0)
+        self._last_eval_seconds = float(chunk.get("eval_duration") or 0) / 1_000_000_000
+        self._last_total_seconds = float(chunk.get("total_duration") or 0) / 1_000_000_000
+        self._persist_persistent_stats()
 
     def generate(self, prompt: str, mode: str = "default") -> str:
         if not self._warmed:
@@ -87,9 +128,7 @@ class OllamaClient:
             return f"Erreur {response.status_code}: {response.text[:200]}"
         data: Dict[str, Any] = response.json()
         self.error_handler.reset()
-        self._last_eval_count = data.get("eval_count", 0)
-        self._last_eval_seconds = data.get("eval_duration", 0) / 1_000_000_000
-        self._last_total_seconds = data.get("total_duration", 0) / 1_000_000_000
+        self._apply_usage_from_ollama(data)
         text = data.get("message", {}).get("content", "").strip()
         if not text:
             self._last_error = "empty_response"
@@ -122,9 +161,8 @@ class OllamaClient:
                     break
             response.close()
             self.error_handler.reset()
-            self._last_eval_count = last_chunk.get("eval_count", 0)
-            self._last_eval_seconds = last_chunk.get("eval_duration", 0) / 1_000_000_000
-            self._last_total_seconds = last_chunk.get("total_duration", 0) / 1_000_000_000
+            if last_chunk:
+                self._apply_usage_from_ollama(last_chunk)
             text = "".join(full_text).strip()
             if not text:
                 self._last_error = "empty_response"

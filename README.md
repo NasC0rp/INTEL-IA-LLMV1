@@ -114,7 +114,7 @@ Intel CODE [free] > votre question
 | `models` | Liste les modeles Ollama disponibles |
 | `key` | Active une cle VIP ou Unlimited |
 | `tier` | Affiche le tier actuel |
-| `tokens` | Affiche l'utilisation de tokens |
+| `tokens` | Derniere utilisation tokens sur la generation Ollama precedente (memorisee localement) |
 | `speed` | Affiche la vitesse de la derniere reponse |
 | `clear` | Efface l'ecran |
 | `exit` | Quitte l'assistant |
@@ -183,7 +183,7 @@ ollama create intel-code -f Modelfile
 
 ## Donnees locales
 
-L'application cree automatiquement le dossier `data/` pour stocker le cache, le quota, le tier actif, l'historique et les logs.
+L'application cree automatiquement le dossier `data/` pour stocker le cache, le quota, le tier actif, l'historique, les dernieres mesures tokens Ollama (fichier `data/cache/token_stats.json`) et les logs.
 
 Ce dossier est ignore par Git.
 

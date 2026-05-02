@@ -34,7 +34,7 @@ COMMANDS = {
     "models": "Modeles disponibles",
     "key": "Activer une cle VIP/Unlimited",
     "tier": "Voir le tier actuel",
-    "tokens": "Tokens restants",
+    "tokens": "Derniere utilisation tokens Ollama (persistee)",
     "speed": "Vitesse derniere reponse",
     "help": "Aide",
 }
