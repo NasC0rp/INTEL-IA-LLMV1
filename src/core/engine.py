@@ -105,27 +105,38 @@ class IntelGPTEngine:
             print_colored(f"Nouvelle version disponible: v{self.updater.latest_version}", Colors.YELLOW)
             print_colored(f"   -> {self.updater.get_update_command()}\n", Colors.GRAY)
 
+    def _print_quota_blocked(self) -> None:
+        info = self.quota.get_wait_until_renewal(self.session_id)
+        if info:
+            end, seconds = info
+            print_colored(f"\n{QuotaManager.format_wait_message(end, seconds)}\n", Colors.YELLOW)
+            return
+        hrs = self.config.get_tier_config().get("window_hours", 12)
+        print_colored(
+            f"\nVous avez atteint votre limite de messages. Renouvellement sous environ {hrs} h apres le debut de votre periode.\n",
+            Colors.YELLOW,
+        )
+
     def _chat_loop(self) -> None:
         while self.running:
             try:
+                prompt: str = input(f"{Colors.RED}Intel CODE [{self.current_tier}] > {Colors.NC}")
+                line: str = prompt.strip()
+                cmd_key: str = line.lower()
+
+                if cmd_key in COMMANDS:
+                    self._handle_command(cmd_key)
+                    continue
+
+                if not line:
+                    continue
+
                 remaining: int = self.quota.get_remaining(self.session_id)
                 if remaining <= 0:
-                    tier_config = self.config.get_tier_config()
-                    hours = tier_config.get("window_hours", 12)
-                    print_colored(f"\n[QUOTA] 0 messages restants. Renouvellement dans {hours}h.\n", Colors.YELLOW)
-                    input("Appuyez sur Entree pour verifier...")
+                    self._print_quota_blocked()
                     continue
 
-                prompt: str = input(f"{Colors.RED}Intel CODE [{self.current_tier}] > {Colors.NC}")
-
-                if prompt.lower() in COMMANDS:
-                    self._handle_command(prompt.lower())
-                    continue
-
-                if not prompt.strip():
-                    continue
-
-                cached: str | None = self.cache.get(prompt)
+                cached: str | None = self.cache.get(line)
                 if cached:
                     print_colored(f"\n{cached}\n", Colors.WHITE)
                     self.quota.use(self.session_id)
@@ -133,14 +144,14 @@ class IntelGPTEngine:
 
                 start_time: float = time.time()
                 # Streaming API Ollama (robuste), mais affichage seulement quand la reponse est complete
-                response: str = self.ollama.generate_streaming(prompt, self.current_mode, on_token=None)
+                response: str = self.ollama.generate_streaming(line, self.current_mode, on_token=None)
                 elapsed: float = time.time() - start_time
 
                 if response and not response.startswith("Erreur"):
                     formatted: str = self.formatter.format(response)
                     print_colored(f"\n{formatted}\n", Colors.WHITE)
-                    self.cache.set(prompt, response)
-                    self.history.add(self.session_id, prompt, response)
+                    self.cache.set(line, response)
+                    self.history.add(self.session_id, line, response)
                     self.quota.use(self.session_id)
                     remaining = self.quota.get_remaining(self.session_id)
                     tokens_per_second = self.ollama.get_last_tokens_per_second()
@@ -194,6 +205,9 @@ class IntelGPTEngine:
             self._show_banner()
         elif cmd == "quota":
             remaining = self.quota.get_remaining(self.session_id)
+            wait = self.quota.get_wait_until_renewal(self.session_id)
+            if remaining <= 0 and wait:
+                print_colored(QuotaManager.format_wait_message(wait[0], wait[1]), Colors.YELLOW)
             print_colored(f"Messages restants : {remaining}", Colors.YELLOW)
         elif cmd == "cache":
             print_colored(f"Cache : {self.cache.size()} entrees", Colors.YELLOW)
