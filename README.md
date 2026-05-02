@@ -11,7 +11,7 @@ Assistant IA en ligne de commande, local, base sur Ollama.
 ## Nouveautes CX1.2
 
 - API `/api/chat` au lieu de `/api/generate` (reponses stables sans corruption)
-- Streaming en temps reel (tokens affiches au fur et a mesure)
+- Streaming cote API Ollama avec affichage de la reponse une fois complete (pas de prelude ni tokens partiels avant le texte)
 - Optimisation des ecritures disque (batch saves avec flush a la fermeture)
 - Compatibilite Windows corrigee (RamChecker via psutil)
 - Retry avec exponential backoff en cas d'erreur Ollama
@@ -21,7 +21,7 @@ Assistant IA en ligne de commande, local, base sur Ollama.
 ## Fonctionnalites
 
 - Assistant terminal local via Ollama
-- Streaming en temps reel des reponses
+- Reponses completes affichees apres reception (streaming API sans bruit avant le contenu utile)
 - Modes de reponse: default, coder, concise, creative, teacher, hacker
 - Gestion de quota par tier: free, vip, unlimited
 - Cache local des reponses

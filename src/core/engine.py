@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 from pathlib import Path
 from src.api.ollama_client import OllamaClient
@@ -132,26 +131,14 @@ class IntelGPTEngine:
                     self.quota.use(self.session_id)
                     continue
 
-                print_colored("\nReflexion...", Colors.GRAY)
                 start_time: float = time.time()
-                token_buf: list[str] = []
-                token_count: int = 0
-
-                def _on_token(token: str) -> None:
-                    nonlocal token_count
-                    token_buf.append(token)
-                    token_count += 1
-                    if token_count % 4 == 0:
-                        sys.stdout.write(Colors.GRAY + token + Colors.NC)
-                        sys.stdout.flush()
-
-                response: str = self.ollama.generate_streaming(prompt, self.current_mode, on_token=_on_token)
+                # Streaming API Ollama (robuste), mais affichage seulement quand la reponse est complete
+                response: str = self.ollama.generate_streaming(prompt, self.current_mode, on_token=None)
                 elapsed: float = time.time() - start_time
 
                 if response and not response.startswith("Erreur"):
-                    sys.stdout.write("\n")
                     formatted: str = self.formatter.format(response)
-                    print_colored(f"{formatted}\n", Colors.WHITE)
+                    print_colored(f"\n{formatted}\n", Colors.WHITE)
                     self.cache.set(prompt, response)
                     self.history.add(self.session_id, prompt, response)
                     self.quota.use(self.session_id)
