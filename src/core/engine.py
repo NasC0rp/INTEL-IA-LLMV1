@@ -187,7 +187,7 @@ class IntelGPTEngine:
             print_colored("Cle invalide.", Colors.RED)
 
     def _show_generation_error(self, response: str) -> None:
-        if response:
+        if response and not response.startswith("Erreur: empty"):
             print_colored(f"\n[ERREUR OLLAMA] {response}\n", Colors.RED)
             return
 
@@ -195,8 +195,8 @@ class IntelGPTEngine:
         last_error = self.ollama.get_last_error() or "empty_response"
         print_colored("\n[ERREUR] Le modele n'a pas produit de texte.", Colors.RED)
         print_colored(f"Tentatives: {attempts} | Diagnostic: {last_error}", Colors.GRAY)
-        print_colored("Causes possibles: requete refusee par le modele, prompt trop ambigu, modele mal cree, ou ressources insuffisantes.", Colors.YELLOW)
-        print_colored("Solutions: reformule la question, essaie le mode concise/coder, ou recrée le modele avec `ollama create intel-code -f Modelfile`.\n", Colors.GRAY)
+        print_colored("Causes possibles: requete refusee par le modele, prompt trop ambigu, ou ressources insuffisantes.", Colors.YELLOW)
+        print_colored("Solution: reformule la question ou essaie un autre mode (commande 'mode').\n", Colors.GRAY)
 
     def _handle_command(self, cmd: str) -> None:
         if cmd == "exit":

@@ -91,7 +91,7 @@ class OllamaClient:
         if not text:
             self._last_error = "empty_response"
             if self.logger:
-                self.logger.warning(f"Ollama empty response with payload options: {payload.get('options', {})}")
+                self.logger.warning(f"Ollama empty response. Full reply: {str(data)[:300]}")
         return text
 
     def _stream_response(self, payload: Dict[str, Any], on_token: Optional[Callable[[str], None]] = None) -> str:
