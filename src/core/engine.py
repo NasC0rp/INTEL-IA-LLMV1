@@ -34,7 +34,7 @@ COMMANDS = {
     "models": "Modeles disponibles",
     "key": "Activer une cle VIP/Unlimited",
     "tier": "Voir le tier actuel",
-    "tokens": "Derniere utilisation tokens Ollama (persistee)",
+    "tokens": "Quota tokens periode + derniere generation (num_predict)",
     "speed": "Vitesse derniere reponse",
     "help": "Aide",
 }
@@ -85,6 +85,11 @@ class IntelGPTEngine:
         print_colored(f"               Tier: {self.current_tier.upper()}", tier_color)
         remaining: int = self.quota.get_remaining(self.session_id)
         print_colored(f"               Messages: {remaining}", Colors.GRAY)
+        cap_tok: int | None = self.quota.get_max_tokens_window(self.session_id)
+        if cap_tok is not None:
+            tr: int | None = self.quota.get_remaining_tokens(self.session_id)
+            if tr is not None:
+                print_colored(f"               Tokens (periode): {tr} / {cap_tok} restants", Colors.GRAY)
         print_colored("               'help' pour les commandes\n", Colors.GRAY)
 
     def _quick_check(self) -> None:
@@ -108,12 +113,12 @@ class IntelGPTEngine:
     def _print_quota_blocked(self) -> None:
         info = self.quota.get_wait_until_renewal(self.session_id)
         if info:
-            end, seconds = info
-            print_colored(f"\n{QuotaManager.format_wait_message(end, seconds)}\n", Colors.YELLOW)
+            end, seconds, reason = info
+            print_colored(f"\n{QuotaManager.format_wait_message(end, seconds, reason)}\n", Colors.YELLOW)
             return
         hrs = self.config.get_tier_config().get("window_hours", 12)
         print_colored(
-            f"\nVous avez atteint votre limite de messages. Renouvellement sous environ {hrs} h apres le debut de votre periode.\n",
+            f"\nQuota atteint (messages ou tokens). Renouvellement sous environ {hrs} h apres le debut de votre periode.\n",
             Colors.YELLOW,
         )
 
@@ -139,7 +144,12 @@ class IntelGPTEngine:
                 cached: str | None = self.cache.get(line)
                 if cached:
                     print_colored(f"\n{cached}\n", Colors.WHITE)
-                    self.quota.use(self.session_id)
+                    self.quota.use(self.session_id, 0)
+                    continue
+
+                tok_period: int | None = self.quota.get_remaining_tokens(self.session_id)
+                if tok_period is not None and tok_period <= 0:
+                    self._print_quota_blocked()
                     continue
 
                 start_time: float = time.time()
@@ -152,10 +162,19 @@ class IntelGPTEngine:
                     print_colored(f"\n{formatted}\n", Colors.WHITE)
                     self.cache.set(line, response)
                     self.history.add(self.session_id, line, response)
-                    self.quota.use(self.session_id)
+                    self.quota.use(self.session_id, self.ollama.get_last_eval_count())
                     remaining = self.quota.get_remaining(self.session_id)
                     tokens_per_second = self.ollama.get_last_tokens_per_second()
-                    print_colored(f"[{elapsed:.1f}s] [{tokens_per_second:.1f} tok/s] [messages:{remaining}] [mode:{self.current_mode}] [tier:{self.current_tier}]", Colors.GRAY)
+                    tok_rem: int | None = self.quota.get_remaining_tokens(self.session_id)
+                    tok_seg: str = ""
+                    if tok_rem is not None:
+                        cap_t: int | None = self.quota.get_max_tokens_window(self.session_id)
+                        if cap_t is not None:
+                            tok_seg = f" [tokens periode:{tok_rem}/{cap_t}]"
+                    print_colored(
+                        f"[{elapsed:.1f}s] [{tokens_per_second:.1f} tok/s] [messages:{remaining}]{tok_seg} [mode:{self.current_mode}] [tier:{self.current_tier}]",
+                        Colors.GRAY,
+                    )
                 else:
                     self._show_generation_error(response)
 
@@ -206,9 +225,17 @@ class IntelGPTEngine:
         elif cmd == "quota":
             remaining = self.quota.get_remaining(self.session_id)
             wait = self.quota.get_wait_until_renewal(self.session_id)
-            if remaining <= 0 and wait:
-                print_colored(QuotaManager.format_wait_message(wait[0], wait[1]), Colors.YELLOW)
+            if wait is not None:
+                print_colored(QuotaManager.format_wait_message(wait[0], wait[1], wait[2]), Colors.YELLOW)
             print_colored(f"Messages restants : {remaining}", Colors.YELLOW)
+            cap_tw = self.quota.get_max_tokens_window(self.session_id)
+            if cap_tw is not None:
+                used_tw = self.quota.get_tokens_used_this_window(self.session_id)
+                rem_tw = self.quota.get_remaining_tokens(self.session_id)
+                print_colored(
+                    f"Quota tokens (sortie modele) sur la periode : {used_tw} utilises, {rem_tw} restants (plafond {cap_tw})",
+                    Colors.YELLOW,
+                )
         elif cmd == "cache":
             print_colored(f"Cache : {self.cache.size()} entrees", Colors.YELLOW)
         elif cmd == "history":
@@ -236,14 +263,44 @@ class IntelGPTEngine:
             print_colored(f"Tier actuel : {self.current_tier.upper()}", Colors.YELLOW)
         elif cmd == "tokens":
             max_tokens = self.config.get_tier_config().get("num_predict", 512)
+            cap_tw = self.quota.get_max_tokens_window(self.session_id)
+            if cap_tw is not None:
+                utw = self.quota.get_tokens_used_this_window(self.session_id)
+                rtw = self.quota.get_remaining_tokens(self.session_id)
+                print_colored(
+                    f"Quota TOKENS periode (cumul sortie modele, meme fenetre que les messages): "
+                    f"{utw} utilises, {rtw} restants, plafond {cap_tw}.",
+                    Colors.CYAN,
+                )
             used = self.ollama.get_last_eval_count()
             speed = self.ollama.get_last_tokens_per_second()
-            remaining = max(0, max_tokens - used)
-            bar_len = 20
-            filled = int((used / max_tokens) * bar_len) if max_tokens > 0 else 0
-            filled = min(filled, bar_len)
-            bar = "|" + "#" * filled + "-" * (bar_len - filled) + "|"
-            print_colored(f"Tokens : {bar} {used}/{max_tokens} utilises ({remaining} restants) | {speed:.1f} tok/s", Colors.CYAN)
+            if used <= 0:
+                print_colored(
+                    "Pas encore de derniere reponse enregistree (0 token). Posez une question pour remplir cette mesure.",
+                    Colors.YELLOW,
+                )
+                print_colored(
+                    f"Par message, le modele est limite par num_predict = {max_tokens} tokens max par generation.",
+                    Colors.GRAY,
+                )
+            else:
+                bar_len = 20
+                filled = int((used / max_tokens) * bar_len) if max_tokens > 0 else 0
+                filled = min(filled, bar_len)
+                bar = "|" + "#" * filled + "-" * (bar_len - filled) + "|"
+                print_colored(
+                    f"Derniere reponse: {used} tokens generes (plafond technique par message num_predict: {max_tokens}).",
+                    Colors.CYAN,
+                )
+                print_colored(
+                    f"Taux d'utilisation du plafond sur cette reponse: {bar} {used}/{max_tokens}",
+                    Colors.CYAN,
+                )
+                print_colored(
+                    "num_predict limite une seule generation ; le quota TOKENS periode limite le total sur la fenetre.",
+                    Colors.GRAY,
+                )
+                print_colored(f"Vitesse derniere reponse: {speed:.1f} tok/s", Colors.GRAY)
         elif cmd == "speed":
             tokens_per_second = self.ollama.get_last_tokens_per_second()
             total_seconds = self.ollama.get_last_total_seconds()

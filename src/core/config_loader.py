@@ -128,6 +128,11 @@ class ConfigLoader:
                 value = tier_config.get(key)
                 if not isinstance(value, int) or value <= 0:
                     errors.append(f"Tier '{tier_name}': '{key}' doit etre un entier positif")
+            mtw = tier_config.get("max_tokens_window")
+            if mtw is not None and (not isinstance(mtw, int) or mtw <= 0):
+                errors.append(
+                    f"Tier '{tier_name}': 'max_tokens_window' doit etre un entier positif ou omis"
+                )
 
         if errors:
             raise ValueError("\n".join(errors))

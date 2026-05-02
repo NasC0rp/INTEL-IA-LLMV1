@@ -5,8 +5,9 @@ Assistant IA en ligne de commande, local, base sur Ollama.
 **CX1.2 est la version la plus stable publiee a ce jour.**
 
 Elle se concentre sur la fiabilite et une experience CLI propre :
-- **Quota fiable** : le compteur ne se reinitialise pas au redemarrage et la fenetre de quota demarre au premier message compte.
-- **Limite atteinte = message clair** : l'app indique combien de temps attendre et l'heure approximative du renouvellement.
+- **Quota fiable** : le compteur ne se reinitialise pas au redemarrage et la fenetre demarre au premier message compte.
+- **Quota tokens periode** : total de tokens de sortie cumule dans la meme fenetre que les messages (config `max_tokens_window`).
+- **Limite atteinte = message clair** : attente indiquee si quota messages et/ou tokens atteint.
 - **Ollama plus robuste** : utilisation de `/api/chat`, retry, et streaming cote API (affichage uniquement quand la reponse est complete).
 - **Windows OK** : checks RAM via `psutil` et dossiers de donnees geres automatiquement.
 
@@ -114,7 +115,7 @@ Intel CODE [free] > votre question
 | `models` | Liste les modeles Ollama disponibles |
 | `key` | Active une cle VIP ou Unlimited |
 | `tier` | Affiche le tier actuel |
-| `tokens` | Derniere utilisation tokens sur la generation Ollama precedente (memorisee localement) |
+| `tokens` | Quota tokens sur la periode + derniere generation vs `num_predict` (stats memorisees) |
 | `speed` | Affiche la vitesse de la derniere reponse |
 | `clear` | Efface l'ecran |
 | `exit` | Quitte l'assistant |
@@ -142,11 +143,13 @@ Intel CODE [free] > votre question
 
 ### Limites par tier
 
-| Tier | num_ctx | num_predict |
-|------|---------|-------------|
-| Free | 2048 | 256 |
-| VIP | 8048 | 2024 |
-| Unlimited | 9096 | 4024 |
+| Tier | num_ctx | num_predict | max_tokens_window (periode) |
+|------|---------|-------------|------------------------------|
+| Free | 2048 | 256 | 7680 |
+| VIP | 8048 | 2024 | 101200 |
+| Unlimited | 9096 | 4024 | 4019976 |
+
+`max_tokens_window` est le **total de tokens de sortie** (compteur Ollama `eval_count`) cumule sur la **meme fenetre** que le quota de messages. Reglable dans `config/limits.json`. Si la cle est omise pour un tier, le quota tokens periode est desactive.
 
 ### Renouvellement quota et tokens
 
@@ -158,7 +161,9 @@ Le quota de messages se renouvelle automatiquement selon la fenetre du tier acti
 
 La fenetre commence au premier message compte dans le cycle courant. Exemple: si le quota Free commence a 14h00, les messages se renouvellent a 02h00.
 
-La limite de tokens n'est pas un quota qui se renouvelle. C'est une limite par reponse: si une reponse atteint la limite de tokens, elle s'arrete, mais l'utilisateur peut envoyer un autre message tant qu'il lui reste du quota messages.
+En parallele, le **quota tokens periode** compte la somme des tokens generes sur la periode. Quand il est a 0 restant, les nouvelles questions vers Ollama sont bloquees (le cache peut encore repondre sans consommer de tokens). Le renouvellement est le meme instant que pour les messages.
+
+`num_predict` reste un **plafond technique par generation** (une seule reponse ne depasse pas ce plafond). Si une reponse atteint ce plafond, elle s'arrete ; vous pouvez envoyer un autre message si vous avez encore du **quota messages** et du **quota tokens periode** (`quota` / `tokens`).
 
 ## Configuration des cles
 

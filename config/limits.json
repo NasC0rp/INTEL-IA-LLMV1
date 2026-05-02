@@ -3,6 +3,7 @@
     "free": {
       "max_messages": 30,
       "window_hours": 12,
+      "max_tokens_window": 7680,
       "num_ctx": 2048,
       "num_predict": 256,
       "num_thread": 0,
@@ -11,6 +12,7 @@
     "vip": {
       "max_messages": 50,
       "window_hours": 12,
+      "max_tokens_window": 101200,
       "num_ctx": 8048,
       "num_predict": 2024,
       "num_thread": 0,
@@ -20,6 +22,7 @@
     "unlimited": {
       "max_messages": 999,
       "window_hours": 1,
+      "max_tokens_window": 4019976,
       "num_ctx": 9096,
       "num_predict": 4024,
       "num_thread": 0,
